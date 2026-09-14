@@ -143,6 +143,13 @@ describe('S3Storage', function() {
         Key: 'x'
       });
     });
+
+    it('throws when s3.deleteObject fails', async function() {
+      const err = new Error('delete failed');
+      s3Stub.deleteObject = sinon.stub().returns(rejectedPromise(err));
+      const s = new S3Storage({ s3_bucket: 'foo' });
+      await assert.rejects(s.del('x'), value => value === err);
+    });
   });
 
   describe('ping', function() {

@@ -1,4 +1,6 @@
 const { Storage } = require('@google-cloud/storage');
+const promisify = require('util').promisify;
+const pipeline = promisify(require('stream').pipeline);
 const storage = new Storage();
 
 class GCSStorage {
@@ -17,17 +19,13 @@ class GCSStorage {
   }
 
   set(id, file) {
-    return new Promise((resolve, reject) => {
-      file
-        .pipe(
-          this.bucket.file(id).createWriteStream({
-            validation: false,
-            resumable: true
-          })
-        )
-        .on('error', reject)
-        .on('finish', resolve);
-    });
+    return pipeline(
+      file,
+      this.bucket.file(id).createWriteStream({
+        validation: false,
+        resumable: true
+      })
+    );
   }
 
   del(id) {

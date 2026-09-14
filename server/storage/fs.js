@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const promisify = require('util').promisify;
+const pipeline = promisify(require('stream').pipeline);
 
 const stat = promisify(fs.stat);
+const unlink = promisify(fs.unlink);
 
 class FSStorage {
   constructor(config, log) {
@@ -22,24 +24,24 @@ class FSStorage {
     return fs.createReadStream(path.join(this.dir, id));
   }
 
-  set(id, file) {
-    return new Promise((resolve, reject) => {
-      const filepath = path.join(this.dir, id);
-      const fstream = fs.createWriteStream(filepath);
-      file.pipe(fstream);
-      file.on('error', err => {
-        fstream.destroy(err);
-      });
-      fstream.on('error', err => {
-        fs.unlinkSync(filepath);
-        reject(err);
-      });
-      fstream.on('finish', resolve);
-    });
+  async set(id, file) {
+    const filepath = path.join(this.dir, id);
+    try {
+      await pipeline(file, fs.createWriteStream(filepath));
+    } catch (err) {
+      try {
+        await unlink(filepath);
+      } catch (unlinkErr) {
+        if (unlinkErr.code !== 'ENOENT') {
+          this.log.error('File cleanup:', unlinkErr);
+        }
+      }
+      throw err;
+    }
   }
 
   del(id) {
-    return Promise.resolve(fs.unlinkSync(path.join(this.dir, id)));
+    return unlink(path.join(this.dir, id));
   }
 
   ping() {

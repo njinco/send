@@ -50,26 +50,77 @@ class DB {
   async set(id, file, meta, expireSeconds = config.default_expire_seconds) {
     const prefix = getPrefix(expireSeconds);
     const filePath = `${prefix}-${id}`;
-    await this.storage.set(filePath, file);
-    this.redis.hset(id, 'prefix', prefix);
-    if (meta) {
-      this.redis.hmset(id, meta);
+    try {
+      await this.storage.set(filePath, file);
+      await this.redis.hmsetAsync(id, { prefix, ...meta });
+      await this.redis.expireAsync(id, expireSeconds);
+    } catch (err) {
+      await this.cleanupFailedSet(id, filePath);
+      throw err;
     }
-    this.redis.expire(id, expireSeconds);
+  }
+
+  async cleanupFailedSet(id, filePath) {
+    try {
+      await this.redis.delAsync(id);
+    } catch (err) {
+      this.log.error('Storage cleanup:', err);
+      return;
+    }
+    try {
+      await this.storage.del(filePath);
+    } catch (err) {
+      this.log.error('Storage cleanup:', err);
+    }
   }
 
   setField(id, key, value) {
-    this.redis.hset(id, key, value);
+    return this.redis.hsetAsync(id, key, value);
+  }
+
+  setFields(id, values) {
+    return this.redis.hmsetAsync(id, values);
   }
 
   incrementField(id, key, increment = 1) {
-    this.redis.hincrby(id, key, increment);
+    return this.redis.hincrbyAsync(id, key, increment);
   }
 
   async del(id) {
-    const filePath = await this.getPrefixedId(id);
-    this.storage.del(filePath);
-    this.redis.del(id);
+    const metadata = await this.redis.hgetallAsync(id);
+    const ttl = await this.redis.ttlAsync(id);
+    const expiresAt = ttl >= 0 ? Date.now() + ttl * 1000 : null;
+    const filePath = `${metadata && metadata.prefix}-${id}`;
+
+    await this.redis.delAsync(id);
+    try {
+      await this.storage.del(filePath);
+    } catch (err) {
+      if (metadata && ttl !== -2) {
+        let metadataRestored = false;
+        try {
+          await this.redis.hmsetAsync(id, metadata);
+          metadataRestored = true;
+          if (ttl >= 0) {
+            const remainingTtl = Math.max(
+              Math.ceil((expiresAt - Date.now()) / 1000),
+              1
+            );
+            await this.redis.expireAsync(id, remainingTtl);
+          }
+        } catch (restoreErr) {
+          this.log.error('Metadata restore:', restoreErr);
+          if (metadataRestored) {
+            try {
+              await this.redis.delAsync(id);
+            } catch (cleanupErr) {
+              this.log.error('Metadata restore cleanup:', cleanupErr);
+            }
+          }
+        }
+      }
+      throw err;
+    }
   }
 
   async ping() {

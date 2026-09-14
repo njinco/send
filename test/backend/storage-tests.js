@@ -98,7 +98,7 @@ describe('Storage', function() {
   describe('setField', function() {
     it('works', async function() {
       await storage.set('x', null);
-      storage.setField('x', 'y', 'z');
+      await storage.setField('x', 'y', 'z');
       const z = await storage.redis.hgetAsync('x', 'y');
       assert.equal(z, 'z');
       await storage.del('x');

@@ -86,6 +86,19 @@ describe('Owner Middleware', function() {
     assert.notEqual(req.nonce, storedMeta.nonce);
   });
 
+  it('rejects authentication when nonce persistence fails', async function() {
+    storage.metadata.resolves(storedMeta);
+    storage.setField.rejects(new Error('redis unavailable'));
+    const req = request(
+      'x',
+      'send-v1 R7nZk14qJqZXtxpnAtw2uDIRQTRnO1qSO1Q0PiwcNA8'
+    );
+    const res = response();
+    await authMiddleware(req, res, next);
+    sinon.assert.calledWith(res.sendStatus, 401);
+    sinon.assert.notCalled(next);
+  });
+
   it('sends a 401 when the hashes do not match', async function() {
     storage.metadata.returns(Promise.resolve(storedMeta));
     const req = request(

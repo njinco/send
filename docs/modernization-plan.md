@@ -84,10 +84,10 @@ Completion gate: documentation-only change; no production behavior changed.
 
 ### Phase 1: reliable storage operations
 
-- [ ] Replace callback-only Redis mutations with awaitable operations.
-- [ ] Propagate write, update, expiry, increment, and deletion failures.
-- [ ] Add cleanup or compensation for partial object/metadata operations.
-- [ ] Add storage failure-path tests for filesystem, Redis, S3, and GCS paths.
+- [x] Replace callback-only Redis mutations with awaitable operations.
+- [x] Propagate write, update, expiry, increment, and deletion failures.
+- [x] Add cleanup or compensation for partial object/metadata operations.
+- [x] Add storage failure-path tests for filesystem, Redis, S3, and GCS paths.
 
 Completion gate: focused storage tests and the backend suite pass.
 
