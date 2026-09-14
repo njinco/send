@@ -18,6 +18,7 @@ function createStorage() {
     hmsetAsync: sinon.stub().resolves(),
     hsetAsync: sinon.stub().resolves(),
     hincrbyAsync: sinon.stub().resolves(),
+    evalAsync: sinon.stub(),
     expireAsync: sinon.stub().resolves(),
     delAsync: sinon.stub().resolves(),
     pingAsync: sinon.stub().resolves()
@@ -102,6 +103,62 @@ describe('Storage failure handling', function() {
 
     await assert.rejects(storage.setField('x', 'owner', 'y'), writeErr);
     await assert.rejects(storage.incrementField('x', 'dl'), incrementErr);
+  });
+
+  it('uses Redis scripts for production nonce compare-and-set', async function() {
+    const { redis, storage } = createStorage();
+    redis.supportsAtomicScripts = true;
+    redis.evalAsync.resolves(1);
+
+    assert.equal(await storage.rotateNonce('x', 'old', 'new'), true);
+    sinon.assert.calledOnce(redis.evalAsync);
+    const args = redis.evalAsync.firstCall.args;
+    assert.match(args[0], /HGET.*nonce/);
+    assert.match(args[0], /HSET/);
+    assert.deepEqual(args.slice(1), [1, 'x', 'old', 'new']);
+  });
+
+  it('uses one Redis script to check and reserve a download', async function() {
+    const { redis, storage } = createStorage();
+    redis.supportsAtomicScripts = true;
+    redis.evalAsync.resolves([2, 2]);
+
+    assert.deepEqual(await storage.reserveDownload('x'), {
+      downloadCount: 2,
+      downloadLimit: 2,
+      finalDownload: true
+    });
+    sinon.assert.calledOnce(redis.evalAsync);
+    const args = redis.evalAsync.firstCall.args;
+    assert.match(args[0], /EXISTS/);
+    assert.match(args[0], /HEXISTS.*prefix/);
+    assert.ok(args[0].indexOf('EXISTS') < args[0].indexOf('HINCRBY'));
+    assert.match(args[0], /HINCRBY.*dl/);
+    assert.deepEqual(args.slice(1), [1, 'x']);
+  });
+
+  it('maps the production script missing-key result to no reservation', async function() {
+    const { redis, storage } = createStorage();
+    redis.supportsAtomicScripts = true;
+    redis.evalAsync.callsFake(script => {
+      assert.match(script, /return {0, 0}/);
+      assert.match(script, /EXISTS/);
+      return Promise.resolve([0, 0]);
+    });
+
+    assert.equal(await storage.reserveDownload('expired'), null);
+    sinon.assert.calledOnce(redis.evalAsync);
+    sinon.assert.notCalled(redis.hincrbyAsync);
+  });
+
+  it('propagates atomic Redis script failures', async function() {
+    const { redis, storage } = createStorage();
+    const err = new Error('script failed');
+    redis.supportsAtomicScripts = true;
+    redis.evalAsync.rejects(err);
+
+    await assert.rejects(storage.rotateNonce('x', 'old', 'new'), err);
+    await assert.rejects(storage.reserveDownload('x'), err);
   });
 
   it('does not delete the object when metadata deletion fails', async function() {

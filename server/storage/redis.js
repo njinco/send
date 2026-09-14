@@ -35,6 +35,10 @@ module.exports = function(config) {
   client.hsetAsync = promisify(client.hset);
   client.hmsetAsync = promisify(client.hmset);
   client.hincrbyAsync = promisify(client.hincrby);
+  if (redis_lib === 'redis') {
+    client.evalAsync = promisify(client.eval);
+  }
+  client.supportsAtomicScripts = redis_lib === 'redis';
   client.expireAsync = promisify(client.expire);
   client.delAsync = promisify(client.del);
   client.pingAsync = promisify(client.ping);

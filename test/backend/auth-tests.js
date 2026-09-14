@@ -4,7 +4,7 @@ const proxyquire = require('proxyquire').noCallThru();
 
 const storage = {
   metadata: sinon.stub(),
-  setField: sinon.stub()
+  rotateNonce: sinon.stub()
 };
 
 function request(id, auth) {
@@ -36,7 +36,8 @@ const authMiddleware = proxyquire('../../server/middleware/auth', {
 describe('Owner Middleware', function() {
   afterEach(function() {
     storage.metadata.reset();
-    storage.setField.reset();
+    storage.rotateNonce.reset();
+    storage.rotateNonce.resolves(true);
     next.reset();
   });
 
@@ -74,7 +75,12 @@ describe('Owner Middleware', function() {
     const res = response();
     await authMiddleware(req, res, next);
     sinon.assert.calledOnce(next);
-    sinon.assert.calledWith(storage.setField, 'x', 'nonce', req.nonce);
+    sinon.assert.calledWith(
+      storage.rotateNonce,
+      'x',
+      storedMeta.nonce,
+      req.nonce
+    );
     sinon.assert.calledWith(
       res.set,
       'WWW-Authenticate',
@@ -88,7 +94,7 @@ describe('Owner Middleware', function() {
 
   it('rejects authentication when nonce persistence fails', async function() {
     storage.metadata.resolves(storedMeta);
-    storage.setField.rejects(new Error('redis unavailable'));
+    storage.rotateNonce.rejects(new Error('redis unavailable'));
     const req = request(
       'x',
       'send-v1 R7nZk14qJqZXtxpnAtw2uDIRQTRnO1qSO1Q0PiwcNA8'
@@ -96,6 +102,26 @@ describe('Owner Middleware', function() {
     const res = response();
     await authMiddleware(req, res, next);
     sinon.assert.calledWith(res.sendStatus, 401);
+    sinon.assert.notCalled(next);
+  });
+
+  it('rejects a replay after another request rotates the nonce', async function() {
+    storage.metadata.onFirstCall().resolves(storedMeta);
+    storage.metadata.onSecondCall().resolves({
+      ...storedMeta,
+      nonce: 'new-nonce'
+    });
+    storage.rotateNonce.resolves(false);
+    const req = request(
+      'x',
+      'send-v1 R7nZk14qJqZXtxpnAtw2uDIRQTRnO1qSO1Q0PiwcNA8'
+    );
+    const res = response();
+
+    await authMiddleware(req, res, next);
+
+    sinon.assert.calledWith(res.sendStatus, 401);
+    sinon.assert.calledWith(res.set, 'WWW-Authenticate', 'send-v1 new-nonce');
     sinon.assert.notCalled(next);
   });
 

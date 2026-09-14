@@ -105,6 +105,91 @@ describe('Storage', function() {
     });
   });
 
+  describe('atomic download state', function() {
+    it('allows only one parallel rotation of the same nonce', async function() {
+      await storage.set('x', null, {
+        dlimit: 1,
+        nonce: 'original'
+      });
+
+      const results = await Promise.all([
+        storage.rotateNonce('x', 'original', 'first'),
+        storage.rotateNonce('x', 'original', 'second')
+      ]);
+      const meta = await storage.metadata('x');
+
+      assert.deepEqual(results.sort(), [false, true]);
+      assert.ok(meta.nonce === 'first' || meta.nonce === 'second');
+      await storage.del('x');
+    });
+
+    it('rejects stale nonce replays', async function() {
+      await storage.set('x', null, {
+        dlimit: 1,
+        nonce: 'original'
+      });
+
+      assert.equal(await storage.rotateNonce('x', 'original', 'next'), true);
+      assert.equal(await storage.rotateNonce('x', 'original', 'replay'), false);
+      assert.equal((await storage.metadata('x')).nonce, 'next');
+      await storage.del('x');
+    });
+
+    it('never reserves more parallel downloads than the limit', async function() {
+      await storage.set('x', null, {
+        dl: 0,
+        dlimit: 2,
+        nonce: 'nonce'
+      });
+
+      const reservations = await Promise.all(
+        Array.from({ length: 10 }, () => storage.reserveDownload('x'))
+      );
+      const accepted = reservations.filter(Boolean);
+      const meta = await storage.metadata('x');
+
+      assert.equal(accepted.length, 2);
+      assert.equal(accepted.filter(item => item.finalDownload).length, 1);
+      assert.equal(meta.dl, 2);
+      assert.equal(await storage.reserveDownload('x'), null);
+      await storage.del('x');
+    });
+
+    it('marks a one-download reservation as final', async function() {
+      await storage.set('x', null, {
+        dl: 0,
+        dlimit: 1,
+        nonce: 'nonce'
+      });
+
+      assert.deepEqual(await storage.reserveDownload('x'), {
+        downloadCount: 1,
+        downloadLimit: 1,
+        finalDownload: true
+      });
+      assert.equal(await storage.reserveDownload('x'), null);
+      await storage.del('x');
+    });
+
+    it('keeps the one-download default for legacy metadata', async function() {
+      await storage.set('x', null, {
+        nonce: 'nonce'
+      });
+
+      assert.deepEqual(await storage.reserveDownload('x'), {
+        downloadCount: 1,
+        downloadLimit: 1,
+        finalDownload: true
+      });
+      await storage.del('x');
+    });
+
+    it('does not recreate metadata when reserving a missing file', async function() {
+      assert.equal(await storage.reserveDownload('missing'), null);
+      assert.equal(await storage.redis.hgetallAsync('missing'), null);
+    });
+  });
+
   describe('del', function() {
     it('works', async function() {
       await storage.set('x', null, { foo: 'bar' });

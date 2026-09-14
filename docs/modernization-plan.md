@@ -93,10 +93,10 @@ Completion gate: focused storage tests and the backend suite pass.
 
 ### Phase 2: atomic authorization and download limits
 
-- [ ] Atomically validate and rotate download nonces.
-- [ ] Reserve a permitted download before streaming begins.
-- [ ] Define cancellation behavior without reopening replay windows.
-- [ ] Add parallel download, replay, cancellation, and final-download tests.
+- [x] Atomically validate and rotate download nonces.
+- [x] Reserve a permitted download before streaming begins.
+- [x] Define cancellation behavior without reopening replay windows.
+- [x] Add parallel download, replay, cancellation, and final-download tests.
 
 Completion gate: concurrency tests demonstrate that the configured download
 limit cannot be exceeded.

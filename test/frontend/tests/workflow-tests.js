@@ -158,9 +158,11 @@ describe('Upload / Download flow', function() {
     assert.equal(file.dtotal, 1);
   });
 
-  it('does not increase download count when download cancelled', async function() {
+  it('consumes a download when download cancelled', async function() {
     const fs = new FileSender();
-    const file = await fs.upload(archive);
+    const cancelArchive = new Archive([blob]);
+    cancelArchive.dlimit = 2;
+    const file = await fs.upload(cancelArchive);
     const fr = new FileReceiver({
       secretKey: file.toJSON().secretKey,
       id: file.id,
@@ -175,7 +177,7 @@ describe('Upload / Download flow', function() {
       assert.fail('not cancelled');
     } catch (e) {
       await file.updateDownloadCount();
-      assert.equal(file.dtotal, 0);
+      assert.equal(file.dtotal, 1);
     }
   });
 
