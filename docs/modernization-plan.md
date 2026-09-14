@@ -14,6 +14,38 @@ an independently reviewable change. Do not begin the next phase automatically.
 - Check the available Codex usage budget before and after every phase.
 - Preserve at least 20% of both the rolling and weekly usage allowances.
 
+## Maker/checker subagent protocol
+
+Implementation phases use two bounded, sequential subagents when the usage
+budget permits:
+
+1. The **maker** receives only the current phase scope and acceptance gate. It
+   implements the change, adds focused tests, and reports changed files and
+   validation results.
+2. The **checker** starts only after the maker finishes. It works read-only,
+   reviews the maker's diff and test evidence, checks correctness, security,
+   regressions, and scope, and returns actionable findings without editing.
+3. The primary agent resolves checker findings, performs final validation, and
+   prepares the phase handoff. A phase is not complete until the checker
+   approves it or every unresolved finding is documented for the user.
+
+To control usage and avoid conflicting edits:
+
+- Use no more than two subagents per phase: one maker and one checker.
+- Run them sequentially, never concurrently, and do not let them spawn more
+  agents.
+- Give both agents targeted files and acceptance criteria instead of the full
+  review history.
+- Prefer a lower-cost model for the read-only checker unless the phase involves
+  concurrency, authentication, cryptography, or another high-risk design.
+- Check usage before spawning the maker and again before spawning the checker.
+  Do not start the pair with less than 50% of the rolling allowance or 30% of
+  the weekly allowance remaining.
+- If the checker cannot safely start within those limits, stop after the
+  maker's work without merging or committing it and resume in a later session.
+- Documentation-only corrections may skip the pair when the user explicitly
+  approves a single-agent edit.
+
 ## Baseline
 
 Captured on September 14, 2026 from `master` at `e0a3d2bf`.
@@ -46,7 +78,7 @@ error.
 - [x] Record repository, runtime, test, build, audit, and Compose baselines.
 - [x] Select Node.js 24 LTS as the runtime migration target.
 - [x] Define phase boundaries and completion criteria.
-- [ ] Commit this planning document.
+- [x] Commit this planning document.
 
 Completion gate: documentation-only change; no production behavior changed.
 
