@@ -4,21 +4,25 @@ const config = require('../config');
 const mozlog = require('../log');
 const Limiter = require('../limiter');
 const { encryptedSize } = require('../../app/utils');
+const { parseAuthorization } = require('../validation');
 
 const log = mozlog('send.upload');
 
 module.exports = async function(req, res) {
   const newId = crypto.randomBytes(8).toString('hex');
   const metadata = req.header('X-File-Metadata');
-  const auth = req.header('Authorization');
-  if (!metadata || !auth) {
+  const auth = parseAuthorization(req.header('Authorization'), 'send-v1', [64]);
+  if (!auth || typeof metadata !== 'string' || metadata.length === 0) {
     return res.sendStatus(400);
+  }
+  if (Buffer.byteLength(metadata) > config.max_metadata_size) {
+    return res.sendStatus(413);
   }
   const owner = crypto.randomBytes(10).toString('hex');
   const meta = {
     owner,
     metadata,
-    auth: auth.split(' ')[1],
+    auth,
     nonce: crypto.randomBytes(16).toString('base64')
   };
 

@@ -6,7 +6,7 @@ module.exports = {
       const webpack = require('webpack');
       const middleware = require('webpack-dev-middleware');
       const express = require('express');
-      const expressWs = require('@dannycoates/express-ws');
+      const setupWebSocket = require('../server/setupWebSocket');
       const assets = require('../common/assets');
       const routes = require('../server/routes');
       const tests = require('./frontend/routes');
@@ -17,7 +17,7 @@ module.exports = {
       });
       app.use(wpm);
       assets.setMiddleware(wpm);
-      expressWs(app, null, { perMessageDeflate: false });
+      setupWebSocket(app);
       routes(app);
       app.ws('/api/ws', require('../server/routes/ws'));
       tests(app);

@@ -25,6 +25,39 @@ local reserved = redis.call('HINCRBY', KEYS[1], 'dl', 1)
 return {reserved, limit}
 `;
 
+const RATE_LIMIT_SCRIPT = `
+local count = redis.call('INCR', KEYS[1])
+if count == 1 then
+  redis.call('PEXPIRE', KEYS[1], ARGV[2])
+end
+local ttl = redis.call('PTTL', KEYS[1])
+if count > tonumber(ARGV[1]) then
+  return {0, ttl}
+end
+return {1, ttl}
+`;
+
+const ACQUIRE_LEASE_SCRIPT = `
+redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', ARGV[1])
+if redis.call('ZCARD', KEYS[1]) >= tonumber(ARGV[2]) then
+  return 0
+end
+redis.call('ZADD', KEYS[1], ARGV[3], ARGV[4])
+redis.call('PEXPIRE', KEYS[1], ARGV[5])
+return 1
+`;
+
+const REFRESH_LEASE_SCRIPT = `
+if not redis.call('ZSCORE', KEYS[1], ARGV[1]) then
+  return 0
+end
+redis.call('ZADD', KEYS[1], ARGV[2], ARGV[1])
+redis.call('PEXPIRE', KEYS[1], ARGV[3])
+return 1
+`;
+
+let atomicFallback = Promise.resolve();
+
 function getPrefix(seconds) {
   return Math.max(Math.floor(seconds / 86400), 1);
 }
@@ -44,7 +77,6 @@ class DB {
     this.storage = new Storage(config, this.log);
 
     this.redis = createRedisClient(config);
-    this.atomicFallback = Promise.resolve();
     this.redis.on('error', err => {
       this.log.error('Redis:', err);
     });
@@ -110,9 +142,91 @@ class DB {
   }
 
   runAtomicFallback(operation) {
-    const result = this.atomicFallback.then(operation);
-    this.atomicFallback = result.catch(() => {});
+    const result = atomicFallback.then(operation);
+    atomicFallback = result.catch(() => {});
     return result;
+  }
+
+  async takeRateLimit(key, limit, windowMs) {
+    let result;
+    if (this.redis.supportsAtomicScripts) {
+      result = await this.redis.evalAsync(
+        RATE_LIMIT_SCRIPT,
+        1,
+        key,
+        limit,
+        windowMs
+      );
+    } else {
+      result = await this.runAtomicFallback(async () => {
+        const count = await this.redis.incrAsync(key);
+        if (count === 1) {
+          await this.redis.pexpireAsync(key, windowMs);
+        }
+        const ttl = await this.redis.pttlAsync(key);
+        return [count <= limit ? 1 : 0, ttl];
+      });
+    }
+    return {
+      allowed: Number(result[0]) === 1,
+      retryAfter: Math.max(Math.ceil(Number(result[1]) / 1000), 1)
+    };
+  }
+
+  async acquireLease(key, token, limit, leaseMs, now = Date.now()) {
+    const expiresAt = now + leaseMs;
+    if (this.redis.supportsAtomicScripts) {
+      return (
+        (await this.redis.evalAsync(
+          ACQUIRE_LEASE_SCRIPT,
+          1,
+          key,
+          now,
+          limit,
+          expiresAt,
+          token,
+          leaseMs
+        )) === 1
+      );
+    }
+    return this.runAtomicFallback(async () => {
+      await this.redis.zremrangebyscoreAsync(key, '-inf', now);
+      if ((await this.redis.zcardAsync(key)) >= limit) {
+        return false;
+      }
+      await this.redis.zaddAsync(key, expiresAt, token);
+      await this.redis.pexpireAsync(key, leaseMs);
+      return true;
+    });
+  }
+
+  async refreshLease(key, token, leaseMs, now = Date.now()) {
+    const expiresAt = now + leaseMs;
+    if (this.redis.supportsAtomicScripts) {
+      return (
+        (await this.redis.evalAsync(
+          REFRESH_LEASE_SCRIPT,
+          1,
+          key,
+          token,
+          expiresAt,
+          leaseMs
+        )) === 1
+      );
+    }
+    return this.runAtomicFallback(async () => {
+      const score = await this.redis.zscoreAsync(key, token);
+      if (score === null) {
+        return false;
+      }
+      await this.redis.zaddAsync(key, expiresAt, token);
+      await this.redis.pexpireAsync(key, leaseMs);
+      return true;
+    });
+  }
+
+  releaseLease(key, token) {
+    return this.redis.zremAsync(key, token);
   }
 
   async rotateNonce(id, expectedNonce, newNonce) {
@@ -222,3 +336,4 @@ class DB {
 }
 
 module.exports = new DB(config);
+module.exports.DB = DB;

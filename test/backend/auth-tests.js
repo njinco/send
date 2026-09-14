@@ -50,7 +50,7 @@ describe('Owner Middleware', function() {
   });
 
   it('sends a 404 when metadata is not found', async function() {
-    const req = request('x', 'y');
+    const req = request('x', `send-v1 ${'A'.repeat(43)}`);
     const res = response();
     await authMiddleware(req, res, next);
     sinon.assert.calledWith(res.sendStatus, 404);
@@ -64,6 +64,21 @@ describe('Owner Middleware', function() {
     await authMiddleware(req, res, next);
     sinon.assert.calledWith(res.sendStatus, 401);
     sinon.assert.notCalled(next);
+  });
+
+  it('rejects a wrong or loosely formatted authorization scheme', async function() {
+    storage.metadata.resolves(storedMeta);
+    for (const header of [
+      `Send-v1 ${'A'.repeat(43)}`,
+      `send-v1  ${'A'.repeat(43)}`,
+      `send-v1 ${'A'.repeat(43)} extra`
+    ]) {
+      const req = request('x', header);
+      const res = response();
+      await authMiddleware(req, res, next);
+      sinon.assert.calledWith(res.sendStatus, 401);
+    }
+    sinon.assert.notCalled(storage.metadata);
   });
 
   it('authenticates when the hashes match', async function() {

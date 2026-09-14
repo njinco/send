@@ -3,25 +3,33 @@ const crypto = require('crypto');
 const storage = require('../storage');
 const config = require('../config');
 const fxa = require('../fxa');
+const {
+  decodeBase64,
+  decodeBase64Url,
+  parseAuthorization
+} = require('../validation');
 
 module.exports = {
   hmac: async function(req, res, next) {
     const id = req.params.id;
-    const authHeader = req.header('Authorization');
-    if (id && authHeader) {
+    const auth = parseAuthorization(req.header('Authorization'), 'send-v1', [
+      32
+    ]);
+    if (id && auth) {
       try {
-        const auth = req.header('Authorization').split(' ')[1];
         const meta = await storage.metadata(id);
         if (!meta) {
           return res.sendStatus(404);
         }
-        const hmac = crypto.createHmac(
-          'sha256',
-          Buffer.from(meta.auth, 'base64')
-        );
-        hmac.update(Buffer.from(meta.nonce, 'base64'));
+        const authKey = decodeBase64Url(meta.auth, [32, 64]);
+        const nonce = decodeBase64(meta.nonce, [16]);
+        if (!authKey || !nonce) {
+          return res.sendStatus(401);
+        }
+        const hmac = crypto.createHmac('sha256', authKey);
+        hmac.update(nonce);
         const verifyHash = hmac.digest();
-        if (crypto.timingSafeEqual(verifyHash, Buffer.from(auth, 'base64'))) {
+        if (crypto.timingSafeEqual(verifyHash, decodeBase64Url(auth, [32]))) {
           req.nonce = crypto.randomBytes(16).toString('base64');
           if (await storage.rotateNonce(id, meta.nonce, req.nonce)) {
             res.set('WWW-Authenticate', `send-v1 ${req.nonce}`);
@@ -74,8 +82,10 @@ module.exports = {
   },
   fxa: async function(req, res, next) {
     const authHeader = req.header('Authorization');
-    if (authHeader && /^Bearer\s/i.test(authHeader)) {
-      const token = authHeader.split(' ')[1];
+    const match =
+      typeof authHeader === 'string' && authHeader.match(/^Bearer ([^ ]+)$/);
+    if (match) {
+      const token = match[1];
       req.user = await fxa.verify(token);
     }
 

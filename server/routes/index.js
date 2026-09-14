@@ -9,12 +9,25 @@ const language = require('../middleware/language');
 const pages = require('./pages');
 const filelist = require('./filelist');
 const clientConstants = require('../clientConstants');
+const abuse = require('../abuse');
 
 const IS_DEV = config.env === 'development';
 const ID_REGEX = '([0-9a-fA-F]{10,16})';
 
 module.exports = function(app) {
-  app.set('trust proxy', true);
+  app.set('trust proxy', config.trust_proxy);
+  app.get('/__lbheartbeat__', function(req, res) {
+    res.sendStatus(200);
+  });
+  app.get('/__heartbeat__', async (req, res) => {
+    try {
+      await storage.ping();
+      res.sendStatus(200);
+    } catch (e) {
+      res.sendStatus(500);
+    }
+  });
+  app.use(abuse.limitRequests);
   app.use(helmet());
   app.use(
     helmet.hsts({
@@ -109,7 +122,7 @@ module.exports = function(app) {
   app.get(`/api/metadata/:id${ID_REGEX}`, auth.hmac, require('./metadata'));
   app.get('/api/filelist/:id([\\w-]{16})', auth.fxa, filelist.get);
   app.post('/api/filelist/:id([\\w-]{16})', auth.fxa, filelist.post);
-  app.post('/api/upload', auth.fxa, require('./upload'));
+  app.post('/api/upload', auth.fxa, abuse.limitUpload, require('./upload'));
   app.post(`/api/delete/:id${ID_REGEX}`, auth.owner, require('./delete'));
   app.post(`/api/password/:id${ID_REGEX}`, auth.owner, require('./password'));
   app.post(
@@ -122,18 +135,5 @@ module.exports = function(app) {
   app.get('/__version__', function(req, res) {
     // eslint-disable-next-line node/no-missing-require
     res.sendFile(require.resolve('../../dist/version.json'));
-  });
-
-  app.get('/__lbheartbeat__', function(req, res) {
-    res.sendStatus(200);
-  });
-
-  app.get('/__heartbeat__', async (req, res) => {
-    try {
-      await storage.ping();
-      res.sendStatus(200);
-    } catch (e) {
-      res.sendStatus(500);
-    }
   });
 };

@@ -35,6 +35,14 @@ module.exports = function(config) {
   client.hsetAsync = promisify(client.hset);
   client.hmsetAsync = promisify(client.hmset);
   client.hincrbyAsync = promisify(client.hincrby);
+  client.incrAsync = promisify(client.incr);
+  client.pttlAsync = promisify(client.pttl);
+  client.pexpireAsync = promisify(client.pexpire);
+  client.zaddAsync = promisify(client.zadd);
+  client.zcardAsync = promisify(client.zcard);
+  client.zremAsync = promisify(client.zrem);
+  client.zremrangebyscoreAsync = promisify(client.zremrangebyscore);
+  client.zscoreAsync = promisify(client.zscore);
   if (redis_lib === 'redis') {
     client.evalAsync = promisify(client.eval);
   }

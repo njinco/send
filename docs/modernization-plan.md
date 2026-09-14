@@ -103,11 +103,11 @@ limit cannot be exceeded.
 
 ### Phase 3: input validation and abuse controls
 
-- [ ] Validate expiry and download counts as bounded safe integers.
-- [ ] Strictly parse authorization schemes and encoded key material.
-- [ ] Bound WebSocket control messages and metadata.
-- [ ] Add appropriate request, concurrent-upload, and per-principal limits.
-- [ ] Configure trusted proxies explicitly before relying on client IPs.
+- [x] Validate expiry and download counts as bounded safe integers.
+- [x] Strictly parse authorization schemes and encoded key material.
+- [x] Bound WebSocket control messages and metadata.
+- [x] Add appropriate request, concurrent-upload, and per-principal limits.
+- [x] Configure trusted proxies explicitly before relying on client IPs.
 
 Completion gate: malformed, boundary, and oversized requests are covered by
 tests and return stable client errors.

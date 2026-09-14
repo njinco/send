@@ -45,6 +45,17 @@ describe('/api/params', function() {
     sinon.assert.calledWith(res.sendStatus, 400);
   });
 
+  it('sends a 400 if dlimit is not a bounded safe integer', async function() {
+    for (const dlimit of [0, -1, 1.5, '2', Number.MAX_SAFE_INTEGER + 1]) {
+      const req = request('x');
+      const res = response();
+      req.body.dlimit = dlimit;
+      await paramsRoute(req, res);
+      sinon.assert.calledWith(res.sendStatus, 400);
+    }
+    sinon.assert.notCalled(storage.setField);
+  });
+
   it('sends a 404 on failure', async function() {
     storage.setField.rejects(new Error());
     const req = request('x');

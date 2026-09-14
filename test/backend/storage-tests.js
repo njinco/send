@@ -190,6 +190,64 @@ describe('Storage', function() {
     });
   });
 
+  describe('shared abuse state', function() {
+    const rateKey = 'send:test:rate';
+    const leaseKey = 'send:test:leases';
+
+    afterEach(async function() {
+      await storage.redis.delAsync(rateKey);
+      await storage.redis.delAsync(leaseKey);
+    });
+
+    it('atomically enforces a fixed-window rate limit', async function() {
+      const second = new storage.DB(config);
+      const results = await Promise.all(
+        Array.from({ length: 5 }, (_, index) =>
+          (index % 2 ? second : storage).takeRateLimit(rateKey, 2, 10000)
+        )
+      );
+      assert.equal(results.filter(result => result.allowed).length, 2);
+      assert.ok(results.every(result => result.retryAfter > 0));
+    });
+
+    it('shares concurrent leases across DB instances', async function() {
+      const second = new storage.DB(config);
+      assert.equal(
+        await storage.acquireLease(leaseKey, 'one', 1, 10000, 1),
+        true
+      );
+      assert.equal(
+        await second.acquireLease(leaseKey, 'two', 1, 10000, 1),
+        false
+      );
+      await storage.releaseLease(leaseKey, 'one');
+      assert.equal(
+        await second.acquireLease(leaseKey, 'two', 1, 10000, 1),
+        true
+      );
+    });
+
+    it('removes expired leases before checking capacity', async function() {
+      assert.equal(
+        await storage.acquireLease(leaseKey, 'old', 1, 10000, 1),
+        true
+      );
+      assert.equal(
+        await storage.acquireLease(leaseKey, 'new', 1, 10000, 10002),
+        true
+      );
+    });
+
+    it('refreshes only an existing lease token', async function() {
+      await storage.acquireLease(leaseKey, 'one', 1, 10000, 1);
+      assert.equal(await storage.refreshLease(leaseKey, 'one', 10000, 2), true);
+      assert.equal(
+        await storage.refreshLease(leaseKey, 'missing', 10000, 2),
+        false
+      );
+    });
+  });
+
   describe('del', function() {
     it('works', async function() {
       await storage.set('x', null, { foo: 'bar' });

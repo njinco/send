@@ -3,6 +3,7 @@ const convict_format_with_validator = require('convict-format-with-validator');
 const { tmpdir } = require('os');
 const path = require('path');
 const { randomBytes } = require('crypto');
+const proxyaddr = require('proxy-addr');
 
 convict.addFormats(convict_format_with_validator);
 
@@ -12,16 +13,47 @@ convict.addFormat({
     // can take: int[] | string[] | string (csv), returns -> int[]
     const ints_arr = Array.isArray(ints) ? ints : ints.trim().split(',');
     return ints_arr.map(int =>
-      typeof int === 'number'
-        ? int
-        : parseInt(int.replace(/['"]+/g, '').trim(), 10)
+      typeof int === 'number' ? int : Number(int.replace(/['"]+/g, '').trim())
     );
   },
   validate: ints => {
-    // takes: int[], errors if any NaNs, negatives, or floats present
+    // takes: int[], errors if any are non-positive or unsafe integers
     for (const int of ints) {
-      if (typeof int !== 'number' || isNaN(int) || int < 0 || int % 1 > 0)
+      if (!Number.isSafeInteger(int) || int <= 0)
         throw new Error('must be a comma-separated list of positive integers');
+    }
+  }
+});
+
+convict.addFormat({
+  name: 'safe-positive-int',
+  coerce: value => Number(value),
+  validate: value => {
+    if (!Number.isSafeInteger(value) || value <= 0) {
+      throw new Error('must be a positive safe integer');
+    }
+  }
+});
+
+convict.addFormat({
+  name: 'trust-proxy',
+  coerce: value => {
+    if (value === false || value === '' || value === 'false') return false;
+    if (typeof value === 'number' || /^\d+$/.test(value)) return Number(value);
+    return String(value)
+      .split(',')
+      .map(item => item.trim());
+  },
+  validate: value => {
+    if (value === false) return;
+    if (Number.isSafeInteger(value) && value >= 0) return;
+    if (!Array.isArray(value) || value.length === 0 || value.some(v => !v)) {
+      throw new Error('must be false, a hop count, or trusted CIDR/name list');
+    }
+    try {
+      proxyaddr.compile(value);
+    } catch (error) {
+      throw new Error('must contain only valid trusted CIDRs or proxy names');
     }
   }
 });
@@ -53,12 +85,12 @@ const conf = convict({
     env: 'EXPIRE_TIMES_SECONDS'
   },
   default_expire_seconds: {
-    format: Number,
+    format: 'safe-positive-int',
     default: 86400,
     env: 'DEFAULT_EXPIRE_SECONDS'
   },
   max_expire_seconds: {
-    format: Number,
+    format: 'safe-positive-int',
     default: 86400 * 7,
     env: 'MAX_EXPIRE_SECONDS'
   },
@@ -68,24 +100,69 @@ const conf = convict({
     env: 'DOWNLOAD_COUNTS'
   },
   default_downloads: {
-    format: Number,
+    format: 'safe-positive-int',
     default: 1,
     env: 'DEFAULT_DOWNLOADS'
   },
   max_downloads: {
-    format: Number,
+    format: 'safe-positive-int',
     default: 100,
     env: 'MAX_DOWNLOADS'
   },
   max_files_per_archive: {
-    format: Number,
+    format: 'safe-positive-int',
     default: 64,
     env: 'MAX_FILES_PER_ARCHIVE'
   },
   max_archives_per_user: {
-    format: Number,
+    format: 'safe-positive-int',
     default: 16,
     env: 'MAX_ARCHIVES_PER_USER'
+  },
+  max_control_message_size: {
+    format: 'safe-positive-int',
+    default: 1024 * 1024,
+    env: 'MAX_CONTROL_MESSAGE_SIZE'
+  },
+  max_metadata_size: {
+    format: 'safe-positive-int',
+    default: 256 * 1024,
+    env: 'MAX_METADATA_SIZE'
+  },
+  request_rate_limit: {
+    format: 'safe-positive-int',
+    default: 1200,
+    env: 'REQUEST_RATE_LIMIT'
+  },
+  request_rate_window_seconds: {
+    format: 'safe-positive-int',
+    default: 60,
+    env: 'REQUEST_RATE_WINDOW_SECONDS'
+  },
+  upload_rate_limit: {
+    format: 'safe-positive-int',
+    default: 100,
+    env: 'UPLOAD_RATE_LIMIT'
+  },
+  upload_rate_window_seconds: {
+    format: 'safe-positive-int',
+    default: 3600,
+    env: 'UPLOAD_RATE_WINDOW_SECONDS'
+  },
+  max_concurrent_uploads: {
+    format: 'safe-positive-int',
+    default: 4,
+    env: 'MAX_CONCURRENT_UPLOADS'
+  },
+  upload_lease_seconds: {
+    format: 'safe-positive-int',
+    default: 60,
+    env: 'UPLOAD_LEASE_SECONDS'
+  },
+  trust_proxy: {
+    format: 'trust-proxy',
+    default: false,
+    env: 'TRUST_PROXY'
   },
   redis_host: {
     format: String,

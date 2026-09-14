@@ -18,6 +18,7 @@ function createStorage() {
     hmsetAsync: sinon.stub().resolves(),
     hsetAsync: sinon.stub().resolves(),
     hincrbyAsync: sinon.stub().resolves(),
+    zremAsync: sinon.stub().resolves(1),
     evalAsync: sinon.stub(),
     expireAsync: sinon.stub().resolves(),
     delAsync: sinon.stub().resolves(),
@@ -135,6 +136,63 @@ describe('Storage failure handling', function() {
     assert.ok(args[0].indexOf('EXISTS') < args[0].indexOf('HINCRBY'));
     assert.match(args[0], /HINCRBY.*dl/);
     assert.deepEqual(args.slice(1), [1, 'x']);
+  });
+
+  it('uses one Redis script for a fixed-window rate decision', async function() {
+    const { redis, storage } = createStorage();
+    redis.supportsAtomicScripts = true;
+    redis.evalAsync.resolves([0, 1500]);
+    assert.deepEqual(await storage.takeRateLimit('rate', 2, 10000), {
+      allowed: false,
+      retryAfter: 2
+    });
+    const args = redis.evalAsync.firstCall.args;
+    assert.match(args[0], /INCR/);
+    assert.match(args[0], /PEXPIRE/);
+    assert.deepEqual(args.slice(1), [1, 'rate', 2, 10000]);
+  });
+
+  it('uses one Redis script to prune and acquire an upload lease', async function() {
+    const { redis, storage } = createStorage();
+    redis.supportsAtomicScripts = true;
+    redis.evalAsync.resolves(1);
+    assert.equal(
+      await storage.acquireLease('leases', 'token', 3, 60000, 10),
+      true
+    );
+    const args = redis.evalAsync.firstCall.args;
+    assert.match(args[0], /ZREMRANGEBYSCORE/);
+    assert.match(args[0], /ZCARD/);
+    assert.match(args[0], /ZADD/);
+    assert.deepEqual(args.slice(1), [
+      1,
+      'leases',
+      10,
+      3,
+      60010,
+      'token',
+      60000
+    ]);
+  });
+
+  it('refreshes and explicitly releases the matching lease token', async function() {
+    const { redis, storage } = createStorage();
+    redis.supportsAtomicScripts = true;
+    redis.evalAsync.resolves(1);
+    assert.equal(
+      await storage.refreshLease('leases', 'token', 60000, 10),
+      true
+    );
+    assert.match(redis.evalAsync.firstCall.args[0], /ZSCORE/);
+    assert.deepEqual(redis.evalAsync.firstCall.args.slice(1), [
+      1,
+      'leases',
+      'token',
+      60010,
+      60000
+    ]);
+    await storage.releaseLease('leases', 'token');
+    sinon.assert.calledWith(redis.zremAsync, 'leases', 'token');
   });
 
   it('maps the production script missing-key result to no reservation', async function() {

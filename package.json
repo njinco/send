@@ -128,7 +128,8 @@
     "webpack-dev-middleware": "^3.7.3",
     "webpack-dev-server": "^3.11.3",
     "webpack-manifest-plugin": "^2.2.0",
-    "webpack-unassert-loader": "^1.2.0"
+    "webpack-unassert-loader": "^1.2.0",
+    "ws": "^7.5.10"
   },
   "dependencies": {
     "@dannycoates/express-ws": "^5.0.3",
@@ -148,6 +149,7 @@
     "helmet": "^3.23.3",
     "mozlog": "^3.0.1",
     "node-fetch": "^2.6.7",
+    "proxy-addr": "^2.0.7",
     "redis": "^3.1.1",
     "redis-mock": "^0.47.0",
     "selenium-standalone": "^6.24.0",
