@@ -119,13 +119,13 @@ class DB {
     try {
       await this.redis.delAsync(id);
     } catch (err) {
-      this.log.error('Storage cleanup:', err);
+      this.log.error('storageCleanup', err);
       return;
     }
     try {
       await this.storage.del(filePath);
     } catch (err) {
-      this.log.error('Storage cleanup:', err);
+      this.log.error('storageCleanup', err);
     }
   }
 

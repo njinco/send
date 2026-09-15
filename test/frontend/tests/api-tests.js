@@ -46,6 +46,7 @@ describe('API', function() {
         meta,
         verifierB64,
         DEFAULTS.EXPIRE_SECONDS,
+        1,
         null,
         p
       );

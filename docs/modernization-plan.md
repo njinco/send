@@ -114,10 +114,10 @@ tests and return stable client errors.
 
 ### Phase 4: frontend test reliability and dead API cleanup
 
-- [ ] Make all frontend setup and browser failures return a nonzero exit code.
-- [ ] Resolve the missing `reportLink` export by restoring or removing the dead
+- [x] Make all frontend setup and browser failures return a nonzero exit code.
+- [x] Resolve the missing `reportLink` export by restoring or removing the dead
   reporting path.
-- [ ] Address warnings that indicate real races or runtime defects.
+- [x] Address warnings that indicate real races or runtime defects.
 
 Completion gate: an intentional setup failure fails the command, frontend tests
 run normally, and the unresolved-export build warning is gone.

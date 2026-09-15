@@ -170,7 +170,14 @@ describe('Upload / Download flow', function() {
       requiresPassword: false
     });
     await fr.getMetadata();
-    fr.once('progress', () => fr.cancel());
+    function cancelAfterTransferStarts() {
+      if (fr.progress[0] > 0) {
+        fr.cancel();
+      } else {
+        fr.once('progress', cancelAfterTransferStarts);
+      }
+    }
+    fr.once('progress', cancelAfterTransferStarts);
 
     try {
       await fr.download(options);
