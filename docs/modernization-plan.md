@@ -124,12 +124,36 @@ run normally, and the unresolved-export build warning is gone.
 
 ### Phase 5A: non-breaking production dependency updates
 
-- [ ] Upgrade directly fixable production dependencies in small groups.
-- [ ] Re-run focused tests and the production-only audit after every group.
-- [ ] Document advisories that are not applicable or require major migration.
+- [x] Upgrade directly fixable production dependencies in small groups.
+- [x] Re-run focused tests and the production-only audit after every group.
+- [x] Document advisories that are not applicable or require major migration.
 
 Completion gate: tests and build pass and the remaining production advisories
 are explicitly accounted for.
+
+#### Phase 5A update record (September 20, 2026)
+
+The non-breaking update groups are intentionally limited to the latest versions
+permitted by the existing major-version ranges: `@sentry/node` 7.120.4,
+`aws-sdk` 2.1693.0, `body-parser` 1.20.8, `convict` 6.2.5, `express` 4.22.3,
+`proxy-addr` 2.0.8, `ua-parser-js` 0.7.41, and `ws` 7.5.13. The HTTP/WebSocket
+and storage/configuration focused suites pass with those versions.
+
+`npm audit --omit=dev` and the full `npm audit` were attempted before the
+updates and after each update group. The advisory bulk endpoint initially
+returned HTTP 503, but a final retry succeeded: 10 production advisories
+(1 critical, 3 high, 4 moderate, 2 low) and 114 full advisories (30 critical,
+48 high, 22 moderate, 14 low). This is a reduction of six advisories in each
+scope from the September 14 baseline (16 production / 120 full).
+
+The following direct dependencies have no non-breaking update available and
+are deferred to a later, family-scoped migration: Fluent bundle/langneg,
+Google Cloud Storage, Sentry 8+, body-parser 2+, CLDR, content-disposition 3,
+Express 5, Helmet 4+, node-fetch 3 (ESM), Redis 4+, redis-mock, Selenium,
+ua-parser-js 2, and ws 8. AWS SDK v2 is end-of-support and is explicitly
+deferred to Phase 5B's modular AWS SDK v3 migration. The Git-sourced
+`configstore` dependency also requires separate ownership and compatibility
+review.
 
 ### Phase 5B: major dependency migrations
 
