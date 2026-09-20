@@ -31,4 +31,11 @@ describe('Node.js runtime configuration', function() {
     assert.match(read('docs/deployment.md'), /Node\.js 24 LTS/);
     assert.match(read('docs/AWS.md'), /Node\.js `24\.x` LTS/);
   });
+
+  it('does not retain the obsolete configstore override', function() {
+    const manifest = JSON.parse(read('package.json'));
+
+    assert.equal(manifest.dependencies.configstore, undefined);
+    assert.doesNotMatch(read('Dockerfile'), /configstore/);
+  });
 });

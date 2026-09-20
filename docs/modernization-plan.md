@@ -152,15 +152,15 @@ Google Cloud Storage, Sentry 8+, body-parser 2+, CLDR, content-disposition 3,
 Express 5, Helmet 4+, node-fetch 3 (ESM), Redis 4+, redis-mock, Selenium,
 ua-parser-js 2, and ws 8. AWS SDK v2 is end-of-support and is explicitly
 deferred to Phase 5B's modular AWS SDK v3 migration. The Git-sourced
-`configstore` dependency also requires separate ownership and compatibility
-review.
+`configstore` dependency was separately reviewed and retired in Phase 5B.
 
 ### Phase 5B: major dependency migrations
 
 - [x] Migrate one dependency family per session.
 - [x] Replace AWS SDK v2 with the maintained modular SDK.
 - [x] Update Google Cloud Storage and its adapter tests.
-- [ ] Replace or upgrade configuration and other blocked dependencies.
+- [x] Remove the obsolete Git-sourced configuration dependency.
+- [ ] Replace or upgrade other blocked dependency families.
 
 Completion gate: each dependency family has focused adapter tests and a clean
 production build before the next family begins.
@@ -213,6 +213,24 @@ audit reports 109, down from 113. The remaining production paths are
 dependency chain. No live GCS provider or Application Default Credentials were
 available for an end-to-end test, so deployment should validate its configured
 bucket and identity before release.
+
+#### Phase 5B configstore retirement record (September 20, 2026)
+
+The Git-sourced `dannycoates/configstore` 5.0.0 override was added in 2019 to
+avoid filesystem access in an older dependency tree. A repository-wide import
+and dependency-tree review confirms that the application does not import it and
+the current dependency tree has no transitive consumer. The maintained npm
+release is now `configstore` 8.0.0 (Node.js 20+, ESM-only), but adding it would
+provide no behavior and would reintroduce an unnecessary configuration store.
+The override and its Docker-only `/app/.config/configstore` directory have
+therefore been removed instead. A runtime configuration regression test keeps
+both stale references from returning. Under Node.js 24.21.0, an isolated clean
+`npm ci`, the focused runtime configuration suite (2 tests), backend suite
+(162 tests), lint (0 errors; 25 existing warnings), and production build all
+pass. The production audit remains 4 advisories (0 critical, 1 high, 2
+moderate, 1 low) and the full audit remains 109, confirming this unused leaf
+did not own an outstanding advisory path. No external service or credentials
+are involved in this retirement.
 
 ### Phase 6A: Node.js runtime migration
 
