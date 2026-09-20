@@ -123,7 +123,7 @@ async function runFrontendTests(options = {}) {
       error => error
     );
     webpackMiddleware = dependencies.middleware(compiler, {
-      logLevel: 'silent'
+      stats: 'errors-only'
     });
     app.use(webpackMiddleware);
     dependencies.devRoutes(app, { middleware: webpackMiddleware });

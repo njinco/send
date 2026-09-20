@@ -13,7 +13,7 @@ module.exports = {
       const app = express();
       const config = require('../webpack.config');
       const wpm = middleware(webpack(config(null, { mode: 'development' })), {
-        logLevel: 'silent'
+        stats: 'errors-only'
       });
       app.use(wpm);
       assets.setMiddleware(wpm);

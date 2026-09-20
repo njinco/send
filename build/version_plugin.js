@@ -17,15 +17,19 @@ const version = JSON.stringify({
 
 class VersionPlugin {
   apply(compiler) {
-    compiler.hooks.emit.tap('VersionPlugin', compilation => {
-      compilation.assets['version.json'] = {
-        source() {
-          return version;
+    compiler.hooks.thisCompilation.tap('VersionPlugin', compilation => {
+      compilation.hooks.processAssets.tap(
+        {
+          name: 'VersionPlugin',
+          stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL
         },
-        size() {
-          return version.length;
+        () => {
+          compilation.emitAsset(
+            'version.json',
+            new compiler.webpack.sources.RawSource(version)
+          );
         }
-      };
+      );
     });
   }
 }

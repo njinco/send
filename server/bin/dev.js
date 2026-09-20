@@ -1,4 +1,5 @@
 const assets = require('../../common/assets');
+const path = require('path');
 const routes = require('../routes');
 const pages = require('../routes/pages');
 const tests = require('../../test/frontend/routes');
@@ -19,8 +20,12 @@ module.exports = function(app, devServer) {
   assets.setMiddleware(devServer.middleware);
   app.use(morgan('dev', { stream: process.stderr }));
   function android(req, res) {
-    const index = devServer.middleware.fileSystem
-      .readFileSync(devServer.middleware.getFilenameFromUrl('/android.html'))
+    const context = devServer.middleware.context;
+    const fileSystem = context.outputFileSystem;
+    const outputPath = (context.compiler.compilers || [context.compiler])[0]
+      .options.output.path;
+    const index = fileSystem
+      .readFileSync(path.join(outputPath, 'android.html'))
       .toString()
       .replace(
         '<base href="file:///android_asset/" />',

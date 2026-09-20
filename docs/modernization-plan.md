@@ -243,13 +243,35 @@ Node.js major version.
 
 ### Phase 6B: build and test tooling modernization
 
-- [ ] Upgrade Webpack and replace obsolete loaders and plugins.
+- [x] Upgrade Webpack and replace obsolete loaders and plugins.
 - [ ] Upgrade Puppeteer and browser-test setup.
 - [ ] Upgrade ESLint, Prettier, Stylelint, Husky, and related configuration.
 - [ ] Refresh Browserslist data and browser targets intentionally.
 
 Completion gate: lint, frontend tests, backend tests, and production build pass
 without obsolete-tool warnings.
+
+#### Webpack 5 update record
+
+Webpack has been upgraded from 4.38.0 to 5.111.1 with its supported CLI,
+webpack-dev-server 5.2.6, middleware, manifest, copy, CSS-extraction, and
+active loader integrations. The obsolete ExtractText, file, and raw loaders have been
+replaced by MiniCssExtractPlugin and webpack asset modules; unused legacy
+loaders have been removed. Custom asset plugins now emit assets through
+`processAssets`, and development manifest reads use webpack-dev-middleware's
+current output filesystem API. Explicit browser fallbacks preserve the Node
+core modules that webpack 4 supplied implicitly, including the test suite's
+`assert` and `http_ece` dependencies. The existing Webdriver configuration now
+declares its `ip` dependency instead of relying on the previous dev server's
+transitive tree.
+
+Under Node.js 24.21.0, a normal clean `npm ci`, frontend browser tests, 162
+backend tests, lint (0 errors; 25 existing warnings), and the production build
+all pass. The production build retains its existing bundle-size and
+service-worker package-JSON import warnings, which are outside this bounded
+migration. Production audit remains 4 advisories (0 critical, 1 high, 2
+moderate, 1 low); the full audit is now 47 (0 critical, 24 high, 12 moderate,
+11 low), reduced from 109 through replacement of the legacy webpack tree.
 
 ### Phase 7A: repository Compose and environment samples
 

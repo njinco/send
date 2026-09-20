@@ -1,4 +1,5 @@
 const genmap = require('./generate_asset_map');
+const path = require('path');
 const isServer = typeof genmap === 'function';
 let prefix = '';
 let manifest = {};
@@ -31,11 +32,18 @@ const instance = {
   match: getMatches,
   setMiddleware: function(middleware) {
     function getManifest() {
-      return JSON.parse(
-        middleware.fileSystem.readFileSync(
-          middleware.getFilenameFromUrl('/manifest.json')
-        )
-      );
+      const context = middleware.context;
+      const fileSystem = context
+        ? context.outputFileSystem
+        : middleware.fileSystem;
+      const filename = context
+        ? path.join(
+            (context.compiler.compilers || [context.compiler])[0].options.output
+              .path,
+            'manifest.json'
+          )
+        : middleware.getFilenameFromUrl('/manifest.json');
+      return JSON.parse(fileSystem.readFileSync(filename));
     }
     if (middleware) {
       instance.get = function getAssetWithMiddleware(name) {

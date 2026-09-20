@@ -1,10 +1,10 @@
 const path = require('path');
 const webpack = require('webpack');
 const CopyPlugin = require('copy-webpack-plugin');
-const ManifestPlugin = require('webpack-manifest-plugin');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const VersionPlugin = require('./build/version_plugin');
 const AndroidIndexPlugin = require('./build/android_index_plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 // Fix for node 18+
 // See: <https://stackoverflow.com/a/78005686/1000145>
@@ -32,6 +32,19 @@ const webJsOptions = {
   ]
 };
 
+const browserFallbacks = {
+  assert: require.resolve('assert/'),
+  buffer: require.resolve('buffer/'),
+  crypto: require.resolve('crypto-browserify'),
+  stream: require.resolve('stream-browserify'),
+  vm: require.resolve('vm-browserify'),
+  path: require.resolve('path-browserify')
+};
+
+const browserAliases = {
+  'process/browser': require.resolve('process/browser.js')
+};
+
 const serviceWorker = {
   target: 'webworker',
   entry: {
@@ -43,26 +56,19 @@ const serviceWorker = {
     publicPath: '/'
   },
   devtool: 'source-map',
+  resolve: { alias: browserAliases, fallback: browserFallbacks },
   module: {
     rules: [
       {
         test: /\.(png|jpg)$/,
-        loader: 'file-loader',
-        options: {
-          name: '[name].[contenthash:8].[ext]',
-          esModule: false
-        }
+        type: 'asset/resource',
+        generator: { filename: '[name].[contenthash:8][ext]' }
       },
       {
         test: /\.svg$/,
+        type: 'asset/resource',
+        generator: { filename: '[name].[contenthash:8][ext]' },
         use: [
-          {
-            loader: 'file-loader',
-            options: {
-              name: '[name].[contenthash:8].[ext]',
-              esModule: false
-            }
-          },
           {
             loader: 'svgo-loader',
             options: {
@@ -91,7 +97,7 @@ const serviceWorker = {
       }
     ]
   },
-  plugins: [new webpack.IgnorePlugin(/\.\.\/dist/)]
+  plugins: [new webpack.IgnorePlugin({ resourceRegExp: /\.\.\/dist/ })]
 };
 
 const web = {
@@ -106,6 +112,7 @@ const web = {
     filename: '[name].[contenthash:8].js',
     path: path.resolve(__dirname, 'dist')
   },
+  resolve: { alias: browserAliases, fallback: browserFallbacks },
   module: {
     rules: [
       {
@@ -135,6 +142,7 @@ const web = {
               path.resolve(__dirname, 'node_modules/@fluent'),
               path.resolve(__dirname, 'node_modules/@sentry'),
               path.resolve(__dirname, 'node_modules/tslib'),
+              path.resolve(__dirname, 'node_modules/webpack-dev-server'),
               path.resolve(__dirname, 'node_modules/webcrypto-core')
             ],
             loader: 'webpack-unassert-loader'
@@ -143,28 +151,20 @@ const web = {
       },
       {
         test: /\.(png|jpg)$/,
-        loader: 'file-loader',
-        options: {
-          name: '[name].[contenthash:8].[ext]',
-          esModule: false
-        }
+        type: 'asset/resource',
+        generator: { filename: '[name].[contenthash:8][ext]' }
       },
       {
         test: /\.svg$/,
+        type: 'asset/resource',
+        generator: { filename: '[name].[contenthash:8][ext]' },
         use: [
-          {
-            loader: 'file-loader',
-            options: {
-              name: '[name].[contenthash:8].[ext]',
-              esModule: false
-            }
-          },
           {
             loader: 'svgo-loader',
             options: {
               plugins: [
                 {
-                  name: 'cleanupIDs',
+                  name: 'cleanupIds',
                   active: false
                 },
                 {
@@ -187,22 +187,21 @@ const web = {
       {
         // creates style.css with all styles
         test: /\.css$/,
-        use: ExtractTextPlugin.extract({
-          use: [
-            {
-              loader: 'css-loader',
-              options: {
-                importLoaders: 1,
-                esModule: false
-              }
-            },
-            'postcss-loader'
-          ]
-        })
+        use: [
+          MiniCssExtractPlugin.loader,
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1,
+              esModule: false
+            }
+          },
+          'postcss-loader'
+        ]
       },
       {
         test: /\.ftl$/,
-        use: 'raw-loader'
+        type: 'asset/source'
       },
       {
         // creates test.js for /test
@@ -226,28 +225,37 @@ const web = {
       ]
     }),
     new webpack.EnvironmentPlugin(['NODE_ENV']),
-    new webpack.IgnorePlugin(/\.\.\/dist/), // used in common/*.js
-    new ExtractTextPlugin({
-      filename: '[name].[md5:contenthash:8].css'
+    new webpack.ProvidePlugin({
+      Buffer: ['buffer', 'Buffer'],
+      process: 'process/browser'
+    }),
+    new webpack.IgnorePlugin({ resourceRegExp: /\.\.\/dist/ }), // used in common/*.js
+    new MiniCssExtractPlugin({
+      filename: '[name].[contenthash:8].css'
     }),
     new VersionPlugin(), // used for the /__version__ route
     new AndroidIndexPlugin(),
-    new ManifestPlugin() // used by server side to resolve hashed assets
+    new WebpackManifestPlugin() // used by server side to resolve hashed assets
   ],
   devtool: 'source-map',
   devServer: {
-    before:
-      process.env.NODE_ENV === 'development' && require('./server/bin/dev'),
+    setupMiddlewares(middlewares, devServer) {
+      if (process.env.NODE_ENV === 'development') {
+        require('./server/bin/dev')(devServer.app, devServer);
+      }
+      return middlewares;
+    },
     compress: true,
     hot: false,
     host: '0.0.0.0',
-    proxy: {
-      '/api/ws': {
+    proxy: [
+      {
+        context: ['/api/ws'],
         target: 'ws://localhost:8081',
         ws: true,
         secure: false
       }
-    }
+    ]
   }
 };
 
