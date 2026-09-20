@@ -151,10 +151,13 @@ async function runFrontendTests(options = {}) {
         }`
       );
     }
-    await page.waitFor(() => typeof runner.testResults !== 'undefined', {
-      polling: 1000,
-      timeout: 60000
-    });
+    await page.waitForFunction(
+      () => typeof runner.testResults !== 'undefined',
+      {
+        polling: 1000,
+        timeout: 60000
+      }
+    );
     if (pageErrors.length) {
       throw pageErrors[0];
     }

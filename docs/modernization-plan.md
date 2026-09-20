@@ -244,7 +244,7 @@ Node.js major version.
 ### Phase 6B: build and test tooling modernization
 
 - [x] Upgrade Webpack and replace obsolete loaders and plugins.
-- [ ] Upgrade Puppeteer and browser-test setup.
+- [x] Upgrade Puppeteer and browser-test setup.
 - [ ] Upgrade ESLint, Prettier, Stylelint, Husky, and related configuration.
 - [ ] Refresh Browserslist data and browser targets intentionally.
 
@@ -272,6 +272,26 @@ service-worker package-JSON import warnings, which are outside this bounded
 migration. Production audit remains 4 advisories (0 critical, 1 high, 2
 moderate, 1 low); the full audit is now 47 (0 critical, 24 high, 12 moderate,
 11 low), reduced from 109 through replacement of the legacy webpack tree.
+
+#### Puppeteer update record
+
+Puppeteer has been upgraded from 2.0.0 to 25.11.0, whose maintained release
+requires Node.js 22.12 or later and is supported by the project's Node.js 24
+runtime. The frontend runner now uses Puppeteer's current `waitForFunction`
+API in place of the removed `waitFor` overload; its launch flags, result
+collection, failure propagation, and cleanup order are otherwise unchanged.
+
+Under Node.js 24.21.0, a normal clean `npm ci`, Puppeteer's pinned Chrome
+153.0.8010.36 installation, frontend browser tests, the focused runner suite
+(4 tests), 162 backend tests, lint (0 errors; 25 existing warnings), and the
+production build all pass. A first run on a new machine must download the
+pinned browser with `npx puppeteer browsers install chrome` when the cache is
+not already populated; this external browser artifact is not committed. The
+production audit remains 4 advisories (0 critical, 1 high, 2 moderate, 1 low),
+while the full audit improves from 47 to 45 (0 critical, 22 high, 12 moderate,
+11 low) through replacement of Puppeteer's legacy dependency tree. No live
+external service or credentials are involved; rollback is the preceding lockfile,
+package declaration, and runner API call.
 
 ### Phase 7A: repository Compose and environment samples
 
