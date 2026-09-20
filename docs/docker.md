@@ -60,7 +60,7 @@ Configure the limits for uploads and downloads. Long expiration times are risky 
 Pick how you want to store uploaded files and set these config options accordingly:
 
 - Local filesystem (the default): set `FILE_DIR` to the local path used inside the container for storage (or leave the default)
-- S3-compatible object store: set `S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` (and `S3_ENDPOINT` if using something other than AWS)
+- S3-compatible object store: set `S3_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` (and `S3_ENDPOINT` if using something other than AWS)
 - Google Cloud Storage: set `GCS_BUCKET` to the name of a GCS bucket (auth should be set up using [Application Default Credentials](https://cloud.google.com/docs/authentication/production#auth-cloud-implicit-nodejs))
 
 Redis is used as the metadata database for the backend and is required no matter which storage method you use.
@@ -70,8 +70,9 @@ Redis is used as the metadata database for the backend and is required no matter
 | `REDIS_HOST`, `REDIS_PORT`, `REDIS_USER`, `REDIS_PASSWORD`, `REDIS_DB` | Host name, port, and pass of the Redis server (defaults to `localhost`, `6379`, and no password)
 | `FILE_DIR`       | Directory for storage inside the Docker container (defaults to `/uploads`)
 | `S3_BUCKET`  | The S3 bucket name to use (only set if using S3 for storage)
+| `AWS_REGION` | The AWS/S3-compatible region for `S3_BUCKET` (required when S3 storage is enabled)
 | `S3_ENDPOINT` | An optional custom endpoint to use for S3 (defaults to AWS)
-| `S3_USE_PATH_STYLE_ENDPOINT`| Whether to force [path style URLs](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#s3ForcePathStyle-property) for S3 objects (defaults to `false`)
+| `S3_USE_PATH_STYLE_ENDPOINT`| Whether to force path-style URLs for S3 objects (defaults to `false`)
 | `AWS_ACCESS_KEY_ID` | S3 access key ID (only set if using S3 for storage)
 | `AWS_SECRET_ACCESS_KEY` | S3 secret access key ID (only set if using S3 for storage)
 | `GCS_BUCKET` | Google Cloud Storage bucket (only set if using GCP for storage)
@@ -110,6 +111,7 @@ Side note: If you define a custom URL and a custom footer, only the footer text 
 ```bash
 $ docker run -p 1443:1443 \
   -e 'S3_BUCKET=testpilot-p2p-dev' \
+  -e 'AWS_REGION=us-west-2' \
   -e 'REDIS_HOST=dyf9s2r4vo3.bolxr4.0001.usw2.cache.amazonaws.com' \
   -e 'SENTRY_CLIENT=https://51e23d7263e348a7a3b90a5357c61cb2@sentry.prod.mozaws.net/168' \
   -e 'SENTRY_DSN=https://51e23d7263e348a7a3b90a5357c61cb2:65e23d7263e348a7a3b90a5357c61c44@sentry.prod.mozaws.net/168' \

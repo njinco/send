@@ -187,6 +187,7 @@ NODE_ENV='production'
 PORT='8080'
 REDIS_PASSWORD='<redis_password>'
 S3_BUCKET='<s3_bucket_name>'
+AWS_REGION='<aws_region>'
 ```
 
 Lower files and folders permissions to user and group `www-data`:

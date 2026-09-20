@@ -1,47 +1,71 @@
-const AWS = require('aws-sdk');
+const {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadBucketCommand,
+  HeadObjectCommand,
+  S3Client
+} = require('@aws-sdk/client-s3');
+const { Upload } = require('@aws-sdk/lib-storage');
 
 class S3Storage {
   constructor(config, log) {
     this.bucket = config.s3_bucket;
     this.log = log;
-    const cfg = {};
+    const cfg = {
+      forcePathStyle: config.s3_use_path_style_endpoint,
+      region: config.s3_region
+    };
     if (config.s3_endpoint != '') {
-      cfg['endpoint'] = config.s3_endpoint;
+      cfg.endpoint = config.s3_endpoint;
     }
-    cfg['s3ForcePathStyle'] = config.s3_use_path_style_endpoint;
-    AWS.config.update(cfg);
-    this.s3 = new AWS.S3();
+    this.s3 = new S3Client(cfg);
   }
 
   async length(id) {
-    const result = await this.s3
-      .headObject({ Bucket: this.bucket, Key: id })
-      .promise();
+    const result = await this.s3.send(
+      new HeadObjectCommand({ Bucket: this.bucket, Key: id })
+    );
     return Number(result.ContentLength);
   }
 
-  getStream(id) {
-    return this.s3
-      .getObject({ Bucket: this.bucket, Key: id })
-      .createReadStream();
+  async getStream(id) {
+    const result = await this.s3.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: id })
+    );
+    return result.Body;
   }
 
-  set(id, file) {
-    const upload = this.s3.upload({
-      Bucket: this.bucket,
-      Key: id,
-      Body: file
+  async set(id, file) {
+    const upload = new Upload({
+      client: this.s3,
+      params: {
+        Bucket: this.bucket,
+        Key: id,
+        Body: file
+      }
     });
-    file.on('error', () => upload.abort());
-    return upload.promise();
+    let sourceError;
+    file.once('error', err => {
+      sourceError = err;
+      upload.abort();
+    });
+    try {
+      return await upload.done();
+    } catch (err) {
+      // Upload.abort() reports an SDK abort error. Preserve the source stream
+      // error exposed by the v2 adapter instead.
+      throw sourceError || err;
+    }
   }
 
   del(id) {
-    return this.s3.deleteObject({ Bucket: this.bucket, Key: id }).promise();
+    return this.s3.send(
+      new DeleteObjectCommand({ Bucket: this.bucket, Key: id })
+    );
   }
 
   ping() {
-    return this.s3.headBucket({ Bucket: this.bucket }).promise();
+    return this.s3.send(new HeadBucketCommand({ Bucket: this.bucket }));
   }
 }
 

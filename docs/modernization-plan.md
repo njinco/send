@@ -157,19 +157,42 @@ review.
 
 ### Phase 5B: major dependency migrations
 
-- [ ] Migrate one dependency family per session.
-- [ ] Replace AWS SDK v2 with the maintained modular SDK.
+- [x] Migrate one dependency family per session.
+- [x] Replace AWS SDK v2 with the maintained modular SDK.
 - [ ] Update Google Cloud Storage and its adapter tests.
 - [ ] Replace or upgrade configuration and other blocked dependencies.
 
 Completion gate: each dependency family has focused adapter tests and a clean
 production build before the next family begins.
 
-AWS SDK v3 was evaluated on September 20, 2026 and deferred until Phase 6.
-The final Node-16-compatible release line (`3.722.0`) introduced a new critical
-production advisory through `@aws-sdk/core` and `fast-xml-parser`; the remediated
-line requires Node 20 or later. Revisit this migration immediately after the
-runtime upgrade, including explicit `AWS_REGION` deployment documentation.
+#### Phase 5B AWS SDK v3 update record (September 20, 2026)
+
+AWS SDK v2 has been replaced with the current modular packages
+`@aws-sdk/client-s3` 3.1136.0 and `@aws-sdk/lib-storage` 3.1136.0. Both require
+Node.js 20 or later and are supported by the declared Node.js 24 runtime. The
+S3 adapter uses commands for object metadata, download streams, deletion, and
+bucket health checks; `Upload` preserves managed multipart uploads. A source
+stream failure aborts the managed upload while preserving the original stream
+error for callers. The storage facade already exposes an asynchronous `get`
+operation, so awaiting the v3 `GetObjectCommand` body does not change callers.
+
+`AWS_REGION` is now a first-class configuration value. It is required and
+nonblank whenever `S3_BUCKET` selects S3 storage, is passed explicitly to the
+S3 client, and is documented alongside S3 credentials, optional endpoints, and
+path-style addressing. The default AWS credential provider chain remains in
+use, preserving environment, shared-configuration, workload, and instance-role
+credential support.
+
+Under Node.js 24.21.0, the runtime guard, a clean `npm ci`, focused S3 suite
+(16 tests), backend suite (151 tests), frontend suite (23 tests), lint (0
+errors; 25 existing warnings), and production build all pass. The production
+audit reports 9 advisories (1 critical, 3 high, 3 moderate, 2 low), down from
+the Phase 5A baseline of 10; the full audit reports 113, down from 114. None
+of the remaining production advisory paths include the AWS SDK v3 packages;
+they are attributable to the deferred Google Cloud Storage and other existing
+dependency families. No live AWS or S3-compatible service was available for an
+end-to-end provider test, so deployment should exercise the configured region,
+credentials, endpoint, and path-style mode before release.
 
 ### Phase 6A: Node.js runtime migration
 

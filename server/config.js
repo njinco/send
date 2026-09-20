@@ -64,6 +64,11 @@ const conf = convict({
     default: '',
     env: 'S3_BUCKET'
   },
+  s3_region: {
+    format: String,
+    default: '',
+    env: 'AWS_REGION'
+  },
   s3_endpoint: {
     format: String,
     default: '',
@@ -444,6 +449,13 @@ const conf = convict({
 conf.validate({ allowed: 'strict' });
 
 const props = conf.getProperties();
+
+if (
+  props.s3_bucket &&
+  (!props.s3_region || props.s3_region.trim() !== props.s3_region)
+) {
+  throw new Error('AWS_REGION must be a non-empty value when S3_BUCKET is set');
+}
 
 const deriveBaseUrl = req => {
   if (!props.detect_base_url) {
