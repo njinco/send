@@ -165,6 +165,12 @@ review.
 Completion gate: each dependency family has focused adapter tests and a clean
 production build before the next family begins.
 
+AWS SDK v3 was evaluated on September 20, 2026 and deferred until Phase 6.
+The final Node-16-compatible release line (`3.722.0`) introduced a new critical
+production advisory through `@aws-sdk/core` and `fast-xml-parser`; the remediated
+line requires Node 20 or later. Revisit this migration immediately after the
+runtime upgrade, including explicit `AWS_REGION` deployment documentation.
+
 ### Phase 6A: Node.js runtime migration
 
 - [ ] Change engines, containers, local documentation, and CI to Node.js 24 LTS.
