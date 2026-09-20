@@ -6,10 +6,6 @@ plugins:
 rules:
   plugin/no-unsupported-browser-features: [true, {severity: warning}]
 
-  color-hex-case: lower
-  declaration-colon-newline-after: null
-  selector-list-comma-newline-after: null
-  value-list-comma-newline-after: null
   at-rule-no-unknown: null
-  # Conflicts with prettier
-  string-quotes: null
+  # Tailwind utility names are valid @apply arguments but are outside CSS grammar.
+  at-rule-prelude-no-invalid: null

@@ -245,7 +245,7 @@ Node.js major version.
 
 - [x] Upgrade Webpack and replace obsolete loaders and plugins.
 - [x] Upgrade Puppeteer and browser-test setup.
-- [ ] Upgrade ESLint, Prettier, Stylelint, Husky, and related configuration.
+- [x] Upgrade ESLint, Prettier, Stylelint, Husky, and related configuration.
 - [ ] Refresh Browserslist data and browser targets intentionally.
 
 Completion gate: lint, frontend tests, backend tests, and production build pass
@@ -292,6 +292,34 @@ while the full audit improves from 47 to 45 (0 critical, 22 high, 12 moderate,
 11 low) through replacement of Puppeteer's legacy dependency tree. No live
 external service or credentials are involved; rollback is the preceding lockfile,
 package declaration, and runner API call.
+
+#### Lint tooling update record
+
+ESLint has been upgraded from 6.6.0 to 10.11.0 and migrated from seven legacy
+`.eslintrc` files to `eslint.config.mjs`. The maintained `eslint-plugin-n`
+replaces deprecated `eslint-plugin-node`; current Mocha, security, and Prettier
+integrations retain the prior project rules and scope-specific browser, test,
+and script environments. The flat configuration explicitly preserves the
+ESLint 6 baseline for rules introduced later, including `no-redeclare` without
+newly recognized built-in globals, avoiding unrelated source rewrites. Six
+existing disable comments now use the maintained `n/*` namespace.
+
+Prettier 3.9.8 uses a shared single-quote configuration. Stylelint 17.15.0,
+standard configuration 40, and its browser-feature plugin replace the old
+Stylelint 14 family; the Tailwind `@apply` grammar exception is retained. Husky
+9 moves pre-commit and pre-push behavior to `.husky/`, and lint-staged 17 no
+longer uses its obsolete manual `git add` step.
+
+Under Node.js 24.21.0, a normal clean `npm ci`, hook syntax and empty-index
+lint-staged validation, lint (0 errors; 16 JavaScript and 71 browser-support
+warnings), 162 backend tests, frontend browser tests, and the production build
+all pass. The browser-support warnings reflect current feature data for the
+project's existing targets and are reserved for the separate browser-targets
+item. Production audit remains 4 advisories (0 critical, 1 high, 2 moderate,
+1 low); the full audit improves from 45 to 36 (0 critical, 16 high, 11
+moderate, 9 low). The normal install is required: the existing Git-sourced
+`webcrypto-core` dependency builds its JavaScript artifact through its install
+lifecycle, so `npm ci --ignore-scripts` cannot run the frontend build.
 
 ### Phase 7A: repository Compose and environment samples
 

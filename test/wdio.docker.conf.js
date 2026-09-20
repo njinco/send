@@ -1,4 +1,4 @@
-// eslint-disable-next-line node/no-extraneous-require
+// eslint-disable-next-line n/no-extraneous-require
 const ip = require('ip');
 const common = require('./wdio.common.conf');
 const dir =
@@ -22,7 +22,7 @@ exports.config = Object.assign({}, common.config, {
     options: {
       p: ['4444:4444', '5900:5900'],
       mount: `type=bind,source=${dir},destination=${dir},consistency=delegated`,
-      shmSize: '2g'
-    }
-  }
+      shmSize: '2g',
+    },
+  },
 });

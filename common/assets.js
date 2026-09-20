@@ -4,7 +4,7 @@ const isServer = typeof genmap === 'function';
 let prefix = '';
 let manifest = {};
 try {
-  //eslint-disable-next-line node/no-missing-require
+  //eslint-disable-next-line n/no-missing-require
   manifest = require('../dist/manifest.json');
 } catch (e) {
   // use middleware
@@ -22,7 +22,7 @@ function setPrefix(name) {
 
 function getMatches(match) {
   return Object.keys(assets)
-    .filter(k => match.test(k))
+    .filter((k) => match.test(k))
     .map(getAsset);
 }
 
@@ -30,7 +30,7 @@ const instance = {
   setPrefix: setPrefix,
   get: getAsset,
   match: getMatches,
-  setMiddleware: function(middleware) {
+  setMiddleware: function (middleware) {
     function getManifest() {
       const context = middleware.context;
       const fileSystem = context
@@ -40,7 +40,7 @@ const instance = {
         ? path.join(
             (context.compiler.compilers || [context.compiler])[0].options.output
               .path,
-            'manifest.json'
+            'manifest.json',
           )
         : middleware.getFilenameFromUrl('/manifest.json');
       return JSON.parse(fileSystem.readFileSync(filename));
@@ -53,11 +53,11 @@ const instance = {
       instance.match = function matchAssetWithMiddleware(match) {
         const m = getManifest();
         return Object.keys(m)
-          .filter(k => match.test(k))
-          .map(k => prefix + m[k]);
+          .filter((k) => match.test(k))
+          .map((k) => prefix + m[k]);
       };
     }
-  }
+  },
 };
 
 module.exports = instance;

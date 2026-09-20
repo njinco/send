@@ -5,7 +5,7 @@ const clientConstants = require('./clientConstants');
 
 let sentry = '';
 if (config.sentry_id) {
-  //eslint-disable-next-line node/no-missing-require
+  //eslint-disable-next-line n/no-missing-require
   const version = require('../dist/version.json');
   sentry = `
 var SENTRY_CONFIG = {
@@ -22,7 +22,7 @@ var SENTRY_CONFIG = {
 `;
 }
 
-module.exports = function(state) {
+module.exports = function (state) {
   const authConfig = state.authConfig
     ? `var AUTH_CONFIG = ${JSON.stringify(state.authConfig)};`
     : '';
