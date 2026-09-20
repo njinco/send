@@ -343,16 +343,35 @@ as an explicit product compatibility change.
 
 ### Phase 7A: repository Compose and environment samples
 
-- [ ] Remove the obsolete top-level Compose `version` field.
-- [ ] Replace legacy `links` with service networking and explicit dependencies.
-- [ ] Add appropriate health checks, persistence, and restart behavior.
-- [ ] Create sanitized `.env.example` and `.env.production.example` files.
-- [ ] Synchronize samples with every supported option in `server/config.js`.
-- [ ] Update documentation to use the `docker compose` command.
-- [ ] Validate with `docker compose config` and a local service smoke test.
+- [x] Remove the obsolete top-level Compose `version` field.
+- [x] Replace legacy `links` with service networking and explicit dependencies.
+- [x] Add appropriate health checks, persistence, and restart behavior.
+- [x] Create sanitized `.env.example` and `.env.production.example` files.
+- [x] Synchronize samples with every supported option in `server/config.js`.
+- [x] Update documentation to use the `docker compose` command.
+- [x] Validate the rendered configuration with `docker compose config`.
+- [ ] Run a local service smoke test and verify volume persistence (Docker daemon access required).
 
 Completion gate: the sample has no obsolete-version warning, contains no real
 secrets, and survives container recreation with expected persistent data.
+
+#### Phase 7A update record (September 21, 2026)
+
+The repository Compose sample now uses the Compose Specification without a
+top-level `version` field or legacy `links`. Redis service discovery uses the
+default network and a health-gated dependency; both services restart unless
+stopped. Redis AOF data and uploads use named volumes. Application and optional
+Selenium VNC ports bind to loopback by default, and the latter remains
+configurable through the documented Compose-only `VNC_PORT` variable.
+
+The sanitized `.env.example` and `.env.production.example` files enumerate all
+server configuration variables with safe defaults and blank credentials. An
+ephemeral copy of the production sample renders successfully with `docker
+compose config --quiet`; it was removed after validation. Docker daemon access
+is denied in this environment, so image build, service smoke, and persistence
+recreation remain required before this phase can meet its final completion
+gate. The external production Compose repository remains intentionally out of
+scope.
 
 ### Phase 7B: external production Compose repository
 

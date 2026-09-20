@@ -1,19 +1,48 @@
-version: "3"
 services:
   web:
     build: .
-    links:
-      - redis
+    restart: unless-stopped
     ports:
-      - "1443:1443"
-    environment:
-      - REDIS_HOST=redis
+      # Bind locally by default; publish through a TLS reverse proxy in production.
+      - "127.0.0.1:${SEND_PORT:-1443}:1443"
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - send-uploads:/uploads
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          node -e "require('http').get({host:'127.0.0.1',port:process.env.PORT || 1443,path:'/__heartbeat__'}, response => process.exit(response.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Used only by the legacy integration-test workflow.
   selenium-firefox:
     image: b4handjr/selenium-firefox
     ports:
-      - "${VNC_PORT:-5900}:5900"
+      - "127.0.0.1:${VNC_PORT:-5900}:5900"
     shm_size: 2g
     volumes:
       - .:/code
+
+volumes:
+  redis-data:
+  send-uploads:

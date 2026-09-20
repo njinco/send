@@ -15,7 +15,9 @@ docker run -v $PWD/uploads:/uploads -p 1443:1443 \
 
 Or clone this repo and run `docker build -t send:latest .` to build an image locally.
 
-*Note: for Docker Compose, see: https://github.com/timvisee/send-docker-compose*
+For a repository-local Compose quickstart, see [Docker Compose](#docker-compose)
+below. The separate production deployment repository remains outside this
+repository's sample.
 
 ## Environment Variables
 
@@ -157,6 +159,35 @@ $ docker run -p 1443:1443 \
 
 ## Docker Compose
 
-For a Docker compose configuration example, see:
+The repository sample starts Send, Redis, and the legacy Selenium test service.
+It persists Redis and local uploads in named Docker volumes, waits for Redis to
+be healthy before starting Send, and binds Send to localhost by default so a
+TLS reverse proxy can be the public entry point.
 
-https://github.com/timvisee/send-docker-compose
+```bash
+cp .env.production.example .env
+# Edit BASE_URL and any selected storage or proxy settings before public use.
+docker compose up -d --build web redis
+docker compose ps
+```
+
+`/__heartbeat__` verifies the configured storage backend; use it for a proxy or
+orchestrator readiness probe. `docker compose down` preserves the named volumes;
+only `docker compose down --volumes` removes Redis metadata and local uploads.
+
+The default port mapping is `127.0.0.1:1443:1443`. Change `SEND_PORT` only when
+the host-side local port must differ. The legacy Selenium VNC service also
+binds only to localhost; change its host-side port with `VNC_PORT`. To expose
+Send publicly, put a TLS reverse proxy in front of it, set `BASE_URL` to that
+public HTTPS address, and set `TRUST_PROXY` only to the precise proxy address
+or CIDR. Do not set it to a broad network range.
+
+Both [`.env.example`](../.env.example) and
+[`.env.production.example`](../.env.production.example) enumerate every
+environment variable supported by `server/config.js`. They contain no
+credentials; provide S3, Redis, Sentry, or FxA secrets through an untracked
+`.env` file or a deployment secret manager. Configure exactly one object-store
+bucket, or leave both bucket variables empty to use the persistent local
+`/uploads` volume. For object storage, prefer workload identity or an attached
+role; the blank SDK credential placeholders exist only for deployments that
+must supply credentials through their secret manager.

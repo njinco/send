@@ -17,7 +17,7 @@ Please view the README at the root directory of the project.
 
 ### Run the tests
 
-Included in the docker-compose file is an image containing Firefox Nightly.
+Included in the Compose file is an image containing Firefox Nightly.
 [tox][Tox] is our test environment manager and [pytest][pytest] is the test runner.
 
 To run the tests, execute the commands below:
@@ -38,11 +38,12 @@ The tests are run on a live version of Firefox, but they are run headless. To ac
 
 1. Make sure all of the containers are running:
 ```sh
-docker-compose ps
+cp .env.example .env # once; .env is ignored by Git
+docker compose ps
 ```
 If not start them detached:
 ```sh
-docker-compose up -d
+docker compose up -d
 ```
 
 2. Open your favorite VNC viewer and type in `localhost:5900`.
