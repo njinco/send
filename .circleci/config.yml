@@ -2,9 +2,10 @@ version: 2.0
 jobs:
   test:
     docker:
-      - image: circleci/node:12-browsers
+      - image: cimg/node:24.0-browsers
     steps:
       - checkout
+      - run: npm run check:runtime
       - run: npm ci
       - run: npm run lint
       - run: npm test
@@ -12,16 +13,17 @@ jobs:
           path: coverage
   integration_tests:
     docker:
-      - image: circleci/node:12-browsers
+      - image: cimg/node:24.0-browsers
     steps:
       - checkout
+      - run: npm run check:runtime
       - run: npm ci
       - run:
           name: Run integration test
           command: ./scripts/bin/run-integration-test-circleci.sh
   deploy_dev:
     docker:
-      - image: circleci/node:12
+      - image: cimg/node:24.0
     steps:
       - checkout
       - setup_remote_docker
@@ -30,7 +32,7 @@ jobs:
       - run: docker push mozilla/send:latest
   deploy_vnext:
     docker:
-      - image: circleci/node:12
+      - image: cimg/node:24.0
     steps:
       - checkout
       - setup_remote_docker
@@ -39,7 +41,7 @@ jobs:
       - run: docker push mozilla/send:vnext
   deploy_stage:
     docker:
-      - image: circleci/node:12
+      - image: cimg/node:24.0
     steps:
       - checkout
       - setup_remote_docker

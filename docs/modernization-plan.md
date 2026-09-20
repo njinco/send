@@ -173,9 +173,9 @@ runtime upgrade, including explicit `AWS_REGION` deployment documentation.
 
 ### Phase 6A: Node.js runtime migration
 
-- [ ] Change engines, containers, local documentation, and CI to Node.js 24 LTS.
-- [ ] Remove compatibility workarounds made unnecessary by supported tooling.
-- [ ] Verify install, backend tests, frontend tests, and production build.
+- [x] Change engines, containers, local documentation, and CI to Node.js 24 LTS.
+- [x] Remove compatibility workarounds made unnecessary by supported tooling.
+- [x] Verify install, backend tests, frontend tests, and production build.
 
 Completion gate: all supported development and deployment paths use the same
 Node.js major version.

@@ -22,6 +22,7 @@
     "format": "prettier '**/*.js' 'assets/*.css' --single-quote --write",
     "get-prod-locales": "node scripts/get-prod-locales",
     "get-prod-locales:write": "npm run get-prod-locales -- --write",
+    "check:runtime": "node scripts/check-node-runtime.js",
     "contributors": "git shortlog -s | awk -F\\t '{print $2}' > CONTRIBUTORS",
     "release": "npm-run-all contributors changelog",
     "test": "npm-run-all test:*",
@@ -59,7 +60,7 @@
     "cache": true
   },
   "engines": {
-    "node": "^16.13.0"
+    "node": ">=24 <25"
   },
   "devDependencies": {
     "@babel/core": "^7.17.9",
@@ -145,7 +146,6 @@
     "double-ended-queue": "^2.1.0-0",
     "express": "^4.22.3",
     "helmet": "^3.23.3",
-    "mozlog": "^3.0.1",
     "node-fetch": "^2.6.7",
     "proxy-addr": "^2.0.8",
     "redis": "^3.1.1",

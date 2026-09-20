@@ -2,7 +2,7 @@
 
 This document describes how to do a full deployment of Send on your own Linux server. You will need:
 
-* A working (and ideally somewhat recent) installation of NodeJS and npm
+* Node.js 24 LTS and its bundled npm
 * Git
 * Apache webserver
 * Optionally telnet, to be able to quickly check your installation

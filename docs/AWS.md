@@ -77,7 +77,7 @@ This document describes how to do a deployment of Send in AWS
 ## Software requirements
 
 * Git
-* NodeJS `15.x` LTS
+* Node.js `24.x` LTS
 * Local Redis server
 
 ### Prerequisite packages
@@ -89,11 +89,10 @@ sudo apt install -y apt-transport-https ca-certificates curl software-properties
 
 ### Add repositories
 
-* NodeJS `15.x` LTS (checkout [package.json](../package.json)):
+* Node.js `24.x` LTS (see [package.json](../package.json)):
 
 ```bash
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add -
-echo 'deb [arch=amd64] https://deb.nodesource.com/node_15.x focal main' | sudo tee /etc/apt/sources.list.d/nodejs.list
+curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
 ```
 
 * Git (latest)
