@@ -246,7 +246,7 @@ Node.js major version.
 - [x] Upgrade Webpack and replace obsolete loaders and plugins.
 - [x] Upgrade Puppeteer and browser-test setup.
 - [x] Upgrade ESLint, Prettier, Stylelint, Husky, and related configuration.
-- [ ] Refresh Browserslist data and browser targets intentionally.
+- [x] Refresh Browserslist data and browser targets intentionally.
 
 Completion gate: lint, frontend tests, backend tests, and production build pass
 without obsolete-tool warnings.
@@ -320,6 +320,26 @@ item. Production audit remains 4 advisories (0 critical, 1 high, 2 moderate,
 moderate, 9 low). The normal install is required: the existing Git-sourced
 `webcrypto-core` dependency builds its JavaScript artifact through its install
 lifecycle, so `npm ci --ignore-scripts` cannot run the frontend build.
+
+#### Browserslist data and target review record
+
+The supported `update-browserslist-db` command was run under Node.js 24.21.0.
+The lockfile already contains its current `caniuse-lite` database
+(1.0.30001810), so the refresh made no package or lockfile change. The existing
+target policy is intentionally retained: the two latest Chrome, Firefox,
+Safari, and Edge releases, plus Firefox ESR and Edge 18. No project
+documentation or product decision authorizes narrowing that legacy support.
+
+The resolved targets are Chrome 151/150, Firefox 154/153/140 ESR, Safari
+26.6/26.5, and Edge 151/150/18. Node.js 24.21.0 lint passes with no errors;
+the 71 CSS browser-support warnings are expected consequences of that policy,
+principally CSS nesting unsupported by Edge 18. The 16 existing JavaScript
+lint warnings are unrelated. Frontend browser tests, 162 backend tests, and a
+production build pass. The build retains its existing asset-size and
+service-worker package-JSON import warnings, which this no-code-change review
+does not affect. Rollback is not applicable because this verification made no
+runtime or dependency change; a future decision to remove Edge 18 must be made
+as an explicit product compatibility change.
 
 ### Phase 7A: repository Compose and environment samples
 
