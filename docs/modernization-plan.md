@@ -159,7 +159,7 @@ review.
 
 - [x] Migrate one dependency family per session.
 - [x] Replace AWS SDK v2 with the maintained modular SDK.
-- [ ] Update Google Cloud Storage and its adapter tests.
+- [x] Update Google Cloud Storage and its adapter tests.
 - [ ] Replace or upgrade configuration and other blocked dependencies.
 
 Completion gate: each dependency family has focused adapter tests and a clean
@@ -193,6 +193,26 @@ they are attributable to the deferred Google Cloud Storage and other existing
 dependency families. No live AWS or S3-compatible service was available for an
 end-to-end provider test, so deployment should exercise the configured region,
 credentials, endpoint, and path-style mode before release.
+
+#### Phase 5B Google Cloud Storage update record (September 20, 2026)
+
+`@google-cloud/storage` is now pinned to 8.2.0, whose Node.js 22-or-later
+support includes the declared Node.js 24 runtime. Its existing adapter API
+remains compatible, so configuration continues to select the configured bucket
+and obtain credentials through Application Default Credentials. Focused tests
+now cover metadata, reads, resumable uploads, deletion, bucket health checks,
+and source/destination stream failures, including cleanup of the opposite
+stream on upload failure.
+
+Under Node.js 24.21.0, the runtime guard, a clean `npm ci`, focused GCS suite
+(12 tests), backend suite (161 tests), lint (0 errors; 25 existing warnings),
+and production build all pass. The production audit reports 4 advisories (0
+critical, 1 high, 2 moderate, 1 low), down from 9 before this update; the full
+audit reports 109, down from 113. The remaining production paths are
+`validator`, `uuid` through `gaxios`, and `min-document`, not the former GCS
+dependency chain. No live GCS provider or Application Default Credentials were
+available for an end-to-end test, so deployment should validate its configured
+bucket and identity before release.
 
 ### Phase 6A: Node.js runtime migration
 
