@@ -148,7 +148,7 @@ scope from the September 14 baseline (16 production / 120 full).
 
 The following direct dependencies have no non-breaking update available and
 are deferred to a later, family-scoped migration: Fluent bundle/langneg,
-Sentry 8+, body-parser 2+, CLDR, content-disposition 3, Express 5, Helmet 4+,
+Sentry 8+, body-parser 2+, CLDR, content-disposition 3, Express 5,
 node-fetch 3 (ESM), Redis 4+, redis-mock, Selenium, and ua-parser-js 2.
 AWS SDK v2 is end-of-support and is explicitly
 deferred to Phase 5B's modular AWS SDK v3 migration. The Git-sourced
@@ -161,6 +161,7 @@ deferred to Phase 5B's modular AWS SDK v3 migration. The Git-sourced
 - [x] Update Google Cloud Storage and its adapter tests.
 - [x] Remove the obsolete Git-sourced configuration dependency.
 - [x] Update the direct WebSocket client/server dependency to ws 8.
+- [x] Update Helmet to the maintained 4.x release.
 - [ ] Replace or upgrade other blocked dependency families.
 
 Completion gate: each dependency family has focused adapter tests and a clean
@@ -242,6 +243,27 @@ focused WebSocket suite (16 tests), backend suite (162 tests), frontend suite
 (23 tests), lint, and production build pass. The production audit remains 4
 advisories (0 critical, 1 high, 2 moderate, 1 low), with no new `ws` advisory
 path. A live reverse-proxy WebSocket upgrade test remains a deployment check.
+
+#### Phase 5B Helmet 4 update record (September 21, 2026)
+
+The direct `helmet` dependency is now `4.6.0`, the latest 4.x release. The
+application's existing `helmet()` defaults, forced production HSTS policy, and
+explicit CSP directives remain API-compatible. Focused regression tests cover
+the default `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy`
+headers, the one-year HSTS policy, CSP `report-uri`, and request-specific CSP
+nonces.
+
+Under Node.js 24.21.0, the focused Helmet suite (2 tests), backend suite (164
+tests), and lint (0 errors; 16 existing warnings) pass. The production audit
+remains 4 advisories (0 critical, 1 high, 2 moderate, 1 low), and the full
+audit reports 36 (0 critical, 16 high, 11 moderate, 9 low); removing Helmet
+3's legacy helper packages did not introduce a new advisory path. A clean
+`npm ci --ignore-scripts` completes, but the existing Git-sourced
+`webcrypto-core` package has no built `dist` entry in that install, so the
+frontend build/test reports unresolved modules until that unrelated dependency
+is installed with a working lifecycle build. This remains deferred to the
+frontend dependency/tooling phase. Live proxy/TLS header behavior remains a
+deployment-host check.
 
 ### Phase 6A: Node.js runtime migration
 
