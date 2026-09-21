@@ -148,7 +148,7 @@ scope from the September 14 baseline (16 production / 120 full).
 
 The following direct dependencies have no non-breaking update available and
 are deferred to a later, family-scoped migration: Fluent bundle/langneg,
-Sentry 8+, body-parser 2+, CLDR, content-disposition 3, Express 5,
+Sentry 8+, body-parser 2+, Express 5,
 node-fetch 3 (ESM), Redis 4+, redis-mock, Selenium, and ua-parser-js 2.
 AWS SDK v2 is end-of-support and is explicitly
 deferred to Phase 5B's modular AWS SDK v3 migration. The Git-sourced
@@ -162,6 +162,7 @@ deferred to Phase 5B's modular AWS SDK v3 migration. The Git-sourced
 - [x] Remove the obsolete Git-sourced configuration dependency.
 - [x] Update the direct WebSocket client/server dependency to ws 8.
 - [x] Update Helmet to the maintained 4.x release.
+- [x] Update content-disposition and CLDR data with focused compatibility tests.
 - [ ] Replace or upgrade other blocked dependency families.
 
 Completion gate: each dependency family has focused adapter tests and a clean
@@ -243,6 +244,16 @@ focused WebSocket suite (16 tests), backend suite (162 tests), frontend suite
 (23 tests), lint, and production build pass. The production audit remains 4
 advisories (0 critical, 1 high, 2 moderate, 1 low), with no new `ws` advisory
 path. A live reverse-proxy WebSocket upgrade test remains a deployment check.
+
+#### Phase 5B content-disposition and CLDR update record (September 22, 2026)
+
+`content-disposition` is now `3.0.0` and `cldr-core` is now `48.2.0`. The
+service worker uses the maintained named `create` export while preserving
+filename header behavior. Focused tests cover ASCII, Latin-1, and non-Latin
+filenames with RFC 5987 encoding; the CLDR language middleware suite remains
+green. Under Node.js 24.21.0, a clean `npm ci`, focused suites (8 tests),
+backend suite (167 tests), lint, production build, and audit pass. The
+production audit remains 4 advisories (0 critical, 1 high, 2 moderate, 1 low).
 
 #### Phase 5B Helmet 4 update record (September 21, 2026)
 

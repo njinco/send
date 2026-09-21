@@ -4,7 +4,7 @@ import Keychain from './keychain';
 import { downloadStream } from './api';
 import { transformStream } from './streams';
 import Zip from './zip';
-import contentDisposition from 'content-disposition';
+import { create as contentDisposition } from 'content-disposition';
 
 let noSave = false;
 const map = new Map();
@@ -17,7 +17,7 @@ self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim().then(precache));
 });
 
@@ -53,20 +53,20 @@ async function decryptStream(id) {
         transform(chunk, controller) {
           file.progress += chunk.length;
           controller.enqueue(chunk);
-        }
+        },
       },
       function oncancel() {
         // NOTE: cancel doesn't currently fire on chrome
         // https://bugs.chromium.org/p/chromium/issues/detail?id=638494
         file.download.cancel();
         map.delete(id);
-      }
+      },
     );
 
     const headers = {
       'Content-Disposition': contentDisposition(file.filename),
       'Content-Type': type,
-      'Content-Length': size
+      'Content-Length': size,
     };
     return new Response(responseStream, { headers });
   } catch (e) {
@@ -77,8 +77,8 @@ async function decryptStream(id) {
     return new Response(null, {
       status: 302,
       headers: {
-        Location: `/download/${id}/#${file.key}`
-      }
+        Location: `/download/${id}/#${file.key}`,
+      },
     });
   }
 }
@@ -121,7 +121,7 @@ async function cachedOrFetched(req) {
   return fetched;
 }
 
-self.onfetch = event => {
+self.onfetch = (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
@@ -133,7 +133,7 @@ self.onfetch = event => {
   }
 };
 
-self.onmessage = event => {
+self.onmessage = (event) => {
   if (event.data.request === 'init') {
     noSave = event.data.noSave;
     const info = {
@@ -146,7 +146,7 @@ self.onmessage = event => {
       type: event.data.type,
       manifest: event.data.manifest,
       size: event.data.size,
-      progress: 0
+      progress: 0,
     };
     map.set(event.data.id, info);
 
