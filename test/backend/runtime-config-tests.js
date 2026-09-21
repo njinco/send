@@ -10,8 +10,8 @@ function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), 'utf8');
 }
 
-describe('Node.js runtime configuration', function() {
-  it('uses Node 24 consistently across supported paths', function() {
+describe('Node.js runtime configuration', function () {
+  it('uses Node 24 consistently across supported paths', function () {
     const packageJson = JSON.parse(read('package.json'));
     const packageLock = JSON.parse(read('package-lock.json'));
 
@@ -24,7 +24,7 @@ describe('Node.js runtime configuration', function() {
     assert.match(read('.circleci/config.yml'), /cimg\/node:24\.0-browsers/);
     assert.match(read('.circleci/config.yml'), /cimg\/node:24\.0/);
     assert.doesNotMatch(read('.circleci/config.yml'), /circleci\/node:/);
-    assert.match(read('.gitlab-ci.yml'), /node:24-slim/);
+    assert.match(read('.gitlab-ci.yml'), /node:24-bookworm-slim/);
     assert.match(read('.circleci/config.yml'), /npm run check:runtime/);
     assert.match(read('.gitlab-ci.yml'), /npm run check:runtime/);
     assert.match(read('README.md'), /Node\.js 24 LTS/);
@@ -32,7 +32,7 @@ describe('Node.js runtime configuration', function() {
     assert.match(read('docs/AWS.md'), /Node\.js `24\.x` LTS/);
   });
 
-  it('does not retain the obsolete configstore override', function() {
+  it('does not retain the obsolete configstore override', function () {
     const manifest = JSON.parse(read('package.json'));
 
     assert.equal(manifest.dependencies.configstore, undefined);

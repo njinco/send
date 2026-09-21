@@ -386,11 +386,31 @@ remains a separate, explicitly authorized action.
 ### Phase 7C: CI and container workflows
 
 - [ ] Consolidate obsolete or overlapping CI systems.
-- [ ] Update build and runtime container bases.
-- [ ] Restrict image publication to intentional release events.
-- [ ] Replace deprecated package-repository and browser-installation steps.
+- [x] Update build and runtime container bases.
+- [x] Restrict image publication to intentional release events.
+- [x] Replace deprecated package-repository and browser-installation steps.
 
 Completion gate: CI configuration validates and test jobs cannot publish images.
+
+#### Phase 7C update record (September 21, 2026)
+
+GitLab CI now uses the pinned `node:24-bookworm-slim` image. Its browser test
+setup relies on Puppeteer's managed Chrome and current Debian runtime
+libraries, removing the obsolete Google apt repository, deprecated `apt-key`,
+and legacy package names. The registry login uses `--password-stdin`.
+
+The GitLab Docker publication job is now tag-only and publishes the tagged
+image plus `latest`; branch, merge-request, schedule, and manual pipelines can
+run tests without publishing images. CircleCI's explicit master, vnext, and
+release-tag deployment jobs remain unchanged. CI YAML parses successfully,
+the Node 24 runtime guard and focused runtime configuration tests pass, and
+the shell integration script passes syntax validation. Docker builds and
+multi-architecture pushes require CI Docker-in-Docker access and were not run
+locally.
+
+Full CI consolidation remains deferred because the repository still exposes
+both CircleCI and GitLab workflows and their ownership/deployment policy must
+be confirmed before removing either system.
 
 ### Phase 8: final hardening and documentation
 

@@ -21,7 +21,7 @@ function assertIncludes(relativePath, expected) {
 function assertNotIncludes(relativePath, unexpected) {
   if (read(relativePath).includes(unexpected)) {
     throw new Error(
-      `${relativePath} must not contain ${JSON.stringify(unexpected)}`
+      `${relativePath} must not contain ${JSON.stringify(unexpected)}`,
     );
   }
 }
@@ -44,7 +44,7 @@ assertIncludes('Dockerfile', 'FROM node:24-alpine\n');
 assertIncludes('.circleci/config.yml', 'cimg/node:24.0-browsers');
 assertIncludes('.circleci/config.yml', 'cimg/node:24.0');
 assertNotIncludes('.circleci/config.yml', 'circleci/node:');
-assertIncludes('.gitlab-ci.yml', 'node:24-slim');
+assertIncludes('.gitlab-ci.yml', 'node:24-bookworm-slim');
 assertIncludes('.circleci/config.yml', 'npm run check:runtime');
 assertIncludes('.gitlab-ci.yml', 'npm run check:runtime');
 assertIncludes('README.md', 'Node.js 24 LTS');
@@ -53,10 +53,10 @@ assertIncludes('docs/AWS.md', 'Node.js `24.x` LTS');
 
 if (process.versions.node.split('.')[0] !== expectedMajor) {
   throw new Error(
-    `Expected Node ${expectedMajor}.x, found ${process.versions.node}`
+    `Expected Node ${expectedMajor}.x, found ${process.versions.node}`,
   );
 }
 
 console.log(
-  `Node ${process.versions.node} matches the supported runtime configuration.`
+  `Node ${process.versions.node} matches the supported runtime configuration.`,
 );
