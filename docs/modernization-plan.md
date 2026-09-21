@@ -136,7 +136,7 @@ are explicitly accounted for.
 The non-breaking update groups are intentionally limited to the latest versions
 permitted by the existing major-version ranges: `@sentry/node` 7.120.4,
 `aws-sdk` 2.1693.0, `body-parser` 1.20.8, `convict` 6.2.5, `express` 4.22.3,
-`proxy-addr` 2.0.8, `ua-parser-js` 0.7.41, and `ws` 7.5.13. The HTTP/WebSocket
+`proxy-addr` 2.0.8 and `ua-parser-js` 0.7.41. The HTTP/WebSocket
 and storage/configuration focused suites pass with those versions.
 
 `npm audit --omit=dev` and the full `npm audit` were attempted before the
@@ -148,9 +148,9 @@ scope from the September 14 baseline (16 production / 120 full).
 
 The following direct dependencies have no non-breaking update available and
 are deferred to a later, family-scoped migration: Fluent bundle/langneg,
-Google Cloud Storage, Sentry 8+, body-parser 2+, CLDR, content-disposition 3,
-Express 5, Helmet 4+, node-fetch 3 (ESM), Redis 4+, redis-mock, Selenium,
-ua-parser-js 2, and ws 8. AWS SDK v2 is end-of-support and is explicitly
+Sentry 8+, body-parser 2+, CLDR, content-disposition 3, Express 5, Helmet 4+,
+node-fetch 3 (ESM), Redis 4+, redis-mock, Selenium, and ua-parser-js 2.
+AWS SDK v2 is end-of-support and is explicitly
 deferred to Phase 5B's modular AWS SDK v3 migration. The Git-sourced
 `configstore` dependency was separately reviewed and retired in Phase 5B.
 
@@ -160,6 +160,7 @@ deferred to Phase 5B's modular AWS SDK v3 migration. The Git-sourced
 - [x] Replace AWS SDK v2 with the maintained modular SDK.
 - [x] Update Google Cloud Storage and its adapter tests.
 - [x] Remove the obsolete Git-sourced configuration dependency.
+- [x] Update the direct WebSocket client/server dependency to ws 8.
 - [ ] Replace or upgrade other blocked dependency families.
 
 Completion gate: each dependency family has focused adapter tests and a clean
@@ -231,6 +232,16 @@ pass. The production audit remains 4 advisories (0 critical, 1 high, 2
 moderate, 1 low) and the full audit remains 109, confirming this unused leaf
 did not own an outstanding advisory path. No external service or credentials
 are involved in this retirement.
+
+#### Phase 5B ws 8 update record (September 21, 2026)
+
+The direct `ws` dependency is now `8.21.3`. The server and client use the
+existing constructor, `maxPayload`, stream, close/error, fragmentation, and
+cleanup APIs without adapter changes. Under Node.js 24.21.0, a clean `npm ci`,
+focused WebSocket suite (16 tests), backend suite (162 tests), frontend suite
+(23 tests), lint, and production build pass. The production audit remains 4
+advisories (0 critical, 1 high, 2 moderate, 1 low), with no new `ws` advisory
+path. A live reverse-proxy WebSocket upgrade test remains a deployment check.
 
 ### Phase 6A: Node.js runtime migration
 
