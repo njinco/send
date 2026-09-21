@@ -28,7 +28,9 @@ module.exports = function (app) {
     }
   });
   app.use(abuse.limitRequests);
-  app.use(helmet());
+  // The development webpack bundle uses eval for source maps. Helmet's
+  // default CSP blocks it; production installs the nonce-based policy below.
+  app.use(helmet({ contentSecurityPolicy: false }));
   app.use(
     helmet.hsts({
       maxAge: 31536000,
