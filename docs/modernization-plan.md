@@ -375,13 +375,29 @@ scope.
 
 ### Phase 7B: external production Compose repository
 
-- [ ] Obtain explicit access to `/home/njinco/send-docker-compose`.
-- [ ] Apply the Compose Specification and environment-sample updates there.
-- [ ] Validate reverse proxy, TLS, Redis, storage, health, and restart behavior.
+- [x] Obtain explicit access to `timvisee/send-docker-compose`.
+- [x] Apply the Compose Specification and environment-sample updates there.
+- [x] Validate Compose interpolation and statically review proxy, TLS, Redis,
+  storage, health, and restart behavior.
 - [ ] Perform a controlled production-like smoke test without deploying.
 
 Completion gate: production configuration resolves successfully and deployment
 remains a separate, explicitly authorized action.
+
+#### Phase 7B update record (September 21, 2026)
+
+The external production template was updated in commit `4e76e20` in
+`timvisee/send-docker-compose`. It removes obsolete Compose syntax, modernizes
+the nginx-proxy and ACME companion services, keeps Send behind the proxy on
+internal port 1443, adds Redis health gating and restart/persistence settings,
+and preserves certificate and upload volumes. The sample uses current `BASE_URL`
+and storage settings, contains no credentials, and documents safe temporary
+`.env` rendering with `docker compose config --quiet`.
+
+Production-owner choices remain intentionally open: pin the Send image by tag
+or digest, set the real hostname and certificate email, and select exactly one
+storage backend. No live startup, TLS issuance, or persistence recreation was
+performed; deployment remains a separate authorized action.
 
 ### Phase 7C: CI and container workflows
 
