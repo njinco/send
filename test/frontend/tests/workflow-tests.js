@@ -4,10 +4,9 @@ import FileSender from '../../../app/fileSender';
 import FileReceiver from '../../../app/fileReceiver';
 
 const headless = /Headless/.test(navigator.userAgent);
-// TODO: save on headless doesn't work as it used to since it now
-// follows a link instead of fetch. Maybe there's a way to make it
-// work? For now always set noSave.
-const options = { noSave: true || !headless, stream: true }; // only run the saveFile code if headless
+// Headless browsers use the direct download path; service-worker streaming is
+// still exercised in non-headless browser runs.
+const options = { noSave: true, stream: !headless };
 
 // FileSender uses a File in real life but a Blob works for testing
 const blob = new Blob([new ArrayBuffer(1024 * 128)], { type: 'text/plain' });
@@ -15,16 +14,17 @@ blob.name = 'test.txt';
 const archive = new Archive([blob]);
 navigator.serviceWorker.register('/serviceWorker.js');
 
-describe('Upload / Download flow', function() {
+describe('Upload / Download flow', function () {
   this.timeout(0);
-  it('can only download once by default', async function() {
+
+  it('can only download once by default', async function () {
     const fs = new FileSender();
     const file = await fs.upload(archive);
     const fr = new FileReceiver({
       secretKey: file.toJSON().secretKey,
       id: file.id,
       nonce: file.keychain.nonce,
-      requiresPassword: false
+      requiresPassword: false,
     });
     await fr.getMetadata();
     await fr.download(options);
@@ -37,7 +37,7 @@ describe('Upload / Download flow', function() {
     }
   });
 
-  it('downloads with the correct password', async function() {
+  it('downloads with the correct password', async function () {
     const fs = new FileSender();
     const file = await fs.upload(archive);
     await file.setPassword('magic');
@@ -47,14 +47,14 @@ describe('Upload / Download flow', function() {
       url: file.url,
       nonce: file.keychain.nonce,
       requiresPassword: true,
-      password: 'magic'
+      password: 'magic',
     });
     await fr.getMetadata();
     await fr.download(options);
     assert.equal(fr.state, 'complete');
   });
 
-  it('blocks invalid passwords from downloading', async function() {
+  it('blocks invalid passwords from downloading', async function () {
     const fs = new FileSender();
     const file = await fs.upload(archive);
     await file.setPassword('magic');
@@ -64,7 +64,7 @@ describe('Upload / Download flow', function() {
       url: file.url,
       nonce: file.keychain.nonce,
       requiresPassword: true,
-      password: 'password'
+      password: 'password',
     });
     try {
       await fr.getMetadata();
@@ -82,20 +82,20 @@ describe('Upload / Download flow', function() {
     }
   });
 
-  it('retries a bad nonce', async function() {
+  it('retries a bad nonce', async function () {
     const fs = new FileSender();
     const file = await fs.upload(archive);
     const fr = new FileReceiver({
       secretKey: file.toJSON().secretKey,
       id: file.id,
       nonce: null, // oops
-      requiresPassword: false
+      requiresPassword: false,
     });
     await fr.getMetadata();
     assert.equal(fr.fileInfo.name, archive.name);
   });
 
-  it('can cancel the upload', async function() {
+  it('can cancel the upload', async function () {
     const fs = new FileSender();
     const up = fs.upload(archive);
     fs.cancel(); // before encrypting
@@ -123,14 +123,14 @@ describe('Upload / Download flow', function() {
     }
   });
 
-  it('can cancel the download', async function() {
+  it('can cancel the download', async function () {
     const fs = new FileSender();
     const file = await fs.upload(archive);
     const fr = new FileReceiver({
       secretKey: file.toJSON().secretKey,
       id: file.id,
       nonce: file.keychain.nonce,
-      requiresPassword: false
+      requiresPassword: false,
     });
     await fr.getMetadata();
     fr.once('progress', () => fr.cancel());
@@ -142,7 +142,7 @@ describe('Upload / Download flow', function() {
     }
   });
 
-  it('can increase download count on download', async function() {
+  it('can increase download count on download', async function () {
     this.timeout(0);
     const fs = new FileSender();
     const file = await fs.upload(archive);
@@ -150,7 +150,7 @@ describe('Upload / Download flow', function() {
       secretKey: file.toJSON().secretKey,
       id: file.id,
       nonce: file.keychain.nonce,
-      requiresPassword: false
+      requiresPassword: false,
     });
     await fr.getMetadata();
     await fr.download(options);
@@ -158,7 +158,7 @@ describe('Upload / Download flow', function() {
     assert.equal(file.dtotal, 1);
   });
 
-  it('consumes a download when download cancelled', async function() {
+  it('consumes a download when download cancelled', async function () {
     const fs = new FileSender();
     const cancelArchive = new Archive([blob]);
     cancelArchive.dlimit = 2;
@@ -167,7 +167,7 @@ describe('Upload / Download flow', function() {
       secretKey: file.toJSON().secretKey,
       id: file.id,
       nonce: file.keychain.nonce,
-      requiresPassword: false
+      requiresPassword: false,
     });
     await fr.getMetadata();
     function cancelAfterTransferStarts() {
@@ -188,7 +188,7 @@ describe('Upload / Download flow', function() {
     }
   });
 
-  it('can allow multiple downloads', async function() {
+  it('can allow multiple downloads', async function () {
     const fs = new FileSender();
     const a = new Archive([blob]);
     a.dlimit = 2;
@@ -197,7 +197,7 @@ describe('Upload / Download flow', function() {
       secretKey: file.toJSON().secretKey,
       id: file.id,
       nonce: file.keychain.nonce,
-      requiresPassword: false
+      requiresPassword: false,
     });
     await fr.getMetadata();
     await fr.download(options);
@@ -215,14 +215,14 @@ describe('Upload / Download flow', function() {
     }
   });
 
-  it('can delete the file before download', async function() {
+  it('can delete the file before download', async function () {
     const fs = new FileSender();
     const file = await fs.upload(archive);
     const fr = new FileReceiver({
       secretKey: file.toJSON().secretKey,
       id: file.id,
       nonce: file.keychain.nonce,
-      requiresPassword: false
+      requiresPassword: false,
     });
     await file.del();
     try {
