@@ -474,10 +474,27 @@ be confirmed before removing either system.
 
 ### Phase 8: final hardening and documentation
 
-- [ ] Review bundle and font sizes and make measured performance improvements.
+- [x] Review bundle and font sizes and make measured performance improvements.
 - [ ] Complete deployment, security, support, and contributor documentation.
 - [ ] Run the complete lint, test, build, audit, and Compose validation matrix.
 - [ ] Produce a final remaining-risk report.
+
+#### Phase 8 font update record (September 23, 2026)
+
+The Inter stylesheet now uses the existing upright and italic variable WOFF2
+fonts for weights 100–900. This preserves the declared weight and style range
+while removing 36 static WOFF/WOFF2 files and one unused combined variable
+font. The generated font payload decreased from 5,056,852 bytes to 545,380
+bytes, a reduction of 4,511,472 bytes (89.2%). The stylesheet decreased from
+3,763 to 332 bytes. The production build emits only the two variable font
+files; the total generated `dist` is 6,328,895 bytes.
+
+Node.js 24 production build and CSS lint pass. A focused Puppeteer check loaded
+regular weights 400, 500, 600, and 700 plus italic 400, and requested only the
+two variable font files. CSS lint reports 71 existing browser-support
+warnings. These figures describe generated deployment assets; first-view
+transfer savings depend on which page styles are requested and were not
+measured. Browser loading was checked, but no pixel-diff comparison was run.
 
 Completion gate: all agreed checks pass or have documented, accepted exceptions.
 
