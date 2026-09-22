@@ -476,8 +476,8 @@ be confirmed before removing either system.
 
 - [x] Review bundle and font sizes and make measured performance improvements.
 - [x] Complete deployment, security, support, and contributor documentation.
-- [ ] Run the complete lint, test, build, audit, and Compose validation matrix.
-- [ ] Produce a final remaining-risk report.
+- [x] Run the complete lint, test, build, audit, and Compose validation matrix.
+- [x] Produce a final remaining-risk report.
 
 #### Phase 8 font update record (September 23, 2026)
 
@@ -519,6 +519,14 @@ The production CSP includes `report-uri /__cspreport__`, but the server does not
 register a handler for that path, so violation reports are not collected. These
 remain deployment or application follow-ups and are not described as completed
 features.
+
+The Node 24 runtime guard, lint, backend and frontend suites, and production
+build pass. Both Compose samples render successfully from their sanitized
+environment samples. The production audit reports 4 advisories (0 critical,
+1 high, 2 moderate, 1 low); the full audit reports 36 (0 critical, 16 high,
+11 moderate, 9 low). Docker daemon access is denied, so container smoke and
+volume-persistence checks remain unverified. The detailed results and open
+actions are in the [final risk report](modernization-risk-report.md).
 
 Completion gate: all agreed checks pass or have documented, accepted exceptions.
 

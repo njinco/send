@@ -1,7 +1,7 @@
 ## Requirements
 
 This guide describes a Linux deployment with Apache as a TLS-terminating reverse
-proxy. Use a currently supported Linux distribution, Node.js 24.x (see
+proxy. Use a currently supported Linux distribution, Node.js 24 LTS (24.x; see
 `.nvmrc`), Git, Apache, and Redis. Redis is required by production deployments
 for upload metadata. The local-filesystem storage path must also be configured
 to use persistent storage; its default is a temporary directory.
