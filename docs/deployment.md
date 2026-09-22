@@ -1,49 +1,43 @@
 ## Requirements
 
-This document describes how to do a full deployment of Send on your own Linux server. You will need:
-
-* Node.js 24 LTS and its bundled npm
-* Git
-* Apache webserver
-* Optionally telnet, to be able to quickly check your installation
-
-For example in Debian/Ubuntu systems:
-
-```bash
-sudo apt install git apache2 nodejs npm telnet
-```
+This guide describes a Linux deployment with Apache as a TLS-terminating reverse
+proxy. Use a currently supported Linux distribution, Node.js 24.x (see
+`.nvmrc`), Git, Apache, and Redis. Redis is required by production deployments
+for upload metadata. The local-filesystem storage path must also be configured
+to use persistent storage; its default is a temporary directory.
 
 ## Building
 
-* We assume an already configured virtual-host on your webserver with an existing empty htdocs folder
-* First, remove that htdocs folder - we will replace it with Send's version now
-* git clone https://github.com/timvisee/send.git htdocs
-* Make now sure you are NOT root but rather the user your webserver is serving files under (e.g. "su www-data" or whoever the owner of your htdocs folder is)
-* npm install
-* npm run build
+* Configure an Apache virtual host and choose an application directory owned by
+  the dedicated, unprivileged Send service account.
+* Clone the repository into that directory, then install the lockfile-defined
+  dependencies and build the production assets:
+
+```bash
+git clone https://github.com/timvisee/send.git /srv/send
+cd /srv/send
+npm run check:runtime
+npm ci
+npm run build
+```
+
+* Set `NODE_ENV=production`, `PORT=1443`, `BASE_URL` to the public HTTPS URL,
+  and configure Redis plus a persistent local upload directory or one object
+  storage backend. See the configuration table in [Docker documentation](docker.md)
+  and `server/config.js` for supported values. For S3, `AWS_REGION` is required.
+* Run the process under a service manager (such as systemd) as the dedicated
+  unprivileged account; do not run the application as root. Keep secrets in a
+  protected environment file or secret manager, outside version control.
 
 ## Running
 
-To have a permanently running version of Send as a background process:
-
-* Create a file `run.sh` with:
-
-```bash
-#!/bin/bash
-nohup su www-data -c "npm run prod" 2>/dev/null &
-```
-
-* Execute the script:
+Configure your service manager to run `npm run prod` from the checkout directory
+with the production environment and dedicated service account. The server
+listens on port 1443 by default. Confirm it is reachable locally before
+configuring Apache:
 
 ```bash
-chmod +x run.sh
-./run.sh
-```
-
-Now the Send backend should be running on port 1443. You can check with:
-
-```bash
-telnet localhost 1443
+curl --fail http://127.0.0.1:1443/__heartbeat__
 ```
 
 ## Reverse Proxy
@@ -87,6 +81,14 @@ RewriteRule /(.*) ws://127.0.0.1:1443/$1 [P,L]
 RewriteRule ^/(.*)$ http://127.0.0.1:1443/$1 [P,QSA]
 ProxyPassReverse  "/" "http://127.0.0.1:1443"
 ```
+
+Send does not trust forwarded headers by default. Configure `TRUST_PROXY` with
+only the address, CIDR, or hop count appropriate to the trusted proxy path;
+never trust arbitrary client-supplied forwarded headers. For a load balancer
+with changing addresses, choose a narrowly scoped trusted network and ensure
+the application port cannot be reached directly by untrusted clients. Check
+the `TRUST_PROXY` setting against the actual proxy topology before enabling
+client-IP-based rate limits.
 
 * Test configuration and restart Apache:
 

@@ -475,7 +475,7 @@ be confirmed before removing either system.
 ### Phase 8: final hardening and documentation
 
 - [x] Review bundle and font sizes and make measured performance improvements.
-- [ ] Complete deployment, security, support, and contributor documentation.
+- [x] Complete deployment, security, support, and contributor documentation.
 - [ ] Run the complete lint, test, build, audit, and Compose validation matrix.
 - [ ] Produce a final remaining-risk report.
 
@@ -495,6 +495,30 @@ two variable font files. CSS lint reports 71 existing browser-support
 warnings. These figures describe generated deployment assets; first-view
 transfer savings depend on which page styles are requested and were not
 measured. Browser loading was checked, but no pixel-diff comparison was run.
+
+#### Phase 8 documentation update record (September 23, 2026)
+
+The README and new contributor guide now use the supported Node.js 24 runtime,
+lockfile-based installation, and current lint/test/build commands. Linux and
+AWS deployment guidance no longer recommends unsafe background launching,
+destructive replacement of the web root, or an obsolete Ubuntu release; it
+documents Redis, persistent storage, trusted-proxy configuration, and a
+bucket-scoped S3 policy. Docker examples use safe placeholders and an accurate
+file-size default. The FAQ distinguishes expired metadata from retained file
+data and describes the current Sentry/Do Not Track behavior.
+
+Maker/checker review approved the documentation changes. `git diff --check`
+and parsing the embedded AWS IAM policy as JSON pass. Open follow-ups are
+recorded below; the docs do not claim they have been resolved.
+
+The documentation review also found that expired Redis metadata makes an
+upload link unavailable but does not automatically delete the associated local
+or object-store file data; operators need a verified cleanup or lifecycle
+policy. No private security-reporting contact is published for this repository.
+The production CSP includes `report-uri /__cspreport__`, but the server does not
+register a handler for that path, so violation reports are not collected. These
+remain deployment or application follow-ups and are not described as completed
+features.
 
 Completion gate: all agreed checks pass or have documented, accepted exceptions.
 

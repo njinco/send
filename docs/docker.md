@@ -5,13 +5,18 @@ Use `registry.gitlab.com/timvisee/send:latest` from [`timvisee/send`'s Gitlab im
 ```bash
 docker pull registry.gitlab.com/timvisee/send:latest
 
-# example quickstart (point REDIS_HOST to an already-running redis server)
+# Example quickstart for Docker Engine 20.10+ with Redis running on the host.
 docker run -v $PWD/uploads:/uploads -p 1443:1443 \
     -e 'DETECT_BASE_URL=true' \
-    -e 'REDIS_HOST=localhost' \
+    --add-host=host.docker.internal:host-gateway \
+    -e 'REDIS_HOST=host.docker.internal' \
     -e 'FILE_DIR=/uploads' \
     registry.gitlab.com/timvisee/send:latest
 ```
+
+The host's Redis must accept connections on the Docker bridge gateway address;
+the default localhost-only Redis binding will not. Restrict Redis access to
+the Docker bridge or use an isolated Redis container instead.
 
 Or clone this repo and run `docker build -t send:latest .` to build an image locally.
 
@@ -46,7 +51,7 @@ Configure the limits for uploads and downloads. Long expiration times are risky 
 
 | Name    | Description |
 |------------------|-------------|
-| `MAX_FILE_SIZE` | Maximum upload file size in bytes (defaults to `2147483648` aka 2GB)
+| `MAX_FILE_SIZE` | Maximum upload file size in bytes (defaults to `2684354560` aka 2.5 GiB)
 | `MAX_FILES_PER_ARCHIVE` | Maximum number of files per archive (defaults to `64`)
 | `MAX_EXPIRE_SECONDS` | Maximum upload expiry time in seconds (defaults to `604800` aka 7 days)
 | `MAX_DOWNLOADS` | Maximum number of downloads (defaults to `100`)
@@ -112,16 +117,18 @@ Side note: If you define a custom URL and a custom footer, only the footer text 
 
 ```bash
 $ docker run -p 1443:1443 \
-  -e 'S3_BUCKET=testpilot-p2p-dev' \
-  -e 'AWS_REGION=us-west-2' \
-  -e 'REDIS_HOST=dyf9s2r4vo3.bolxr4.0001.usw2.cache.amazonaws.com' \
-  -e 'SENTRY_CLIENT=https://51e23d7263e348a7a3b90a5357c61cb2@sentry.prod.mozaws.net/168' \
-  -e 'SENTRY_DSN=https://51e23d7263e348a7a3b90a5357c61cb2:65e23d7263e348a7a3b90a5357c61c44@sentry.prod.mozaws.net/168' \
+  -e 'S3_BUCKET=<your-private-bucket>' \
+  -e 'AWS_REGION=<your-region>' \
+  -e 'REDIS_HOST=<your-redis-host>' \
+  -e 'SENTRY_CLIENT=<your-sentry-client-id>' \
+  -e 'SENTRY_DSN=<your-sentry-dsn>' \
   -e 'BASE_URL=https://send.example.com' \
   registry.gitlab.com/timvisee/send:latest
 ```
 
-*Note: make sure to replace the example values above with your real values before running.*
+Replace every placeholder with values for your deployment. Keep the bucket
+private and grant the application only the required bucket permissions. Do not
+copy credentials or endpoint values from another deployment.
 
 
 **Run totally self-hosted using the current filesystem directry (`$PWD`) to store the Redis data and file uploads, with a `5GB` upload limit, 1 month expiry, and contact URL set.**

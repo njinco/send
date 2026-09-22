@@ -92,7 +92,8 @@ A file sharing experiment which allows you to send encrypted files to other user
 To start an ephemeral development server, run:
 
 ```sh
-npm install
+npm run check:runtime
+npm ci
 npm start
 ```
 
@@ -127,7 +128,9 @@ See: [docs/localization.md](docs/localization.md)
 
 ## Contributing
 
-Pull requests are always welcome! Feel free to check out the list of "good first issues" (to be implemented).
+Pull requests are welcome. See [Contributing](docs/contributing.md) for the
+supported Node.js version, clean install and validation commands, and guidance
+for reporting security issues.
 
 ---
 
@@ -143,7 +146,7 @@ See: [docs/deployment.md](docs/deployment.md)
 
 Docker quickstart: [docs/docker.md](docs/docker.md)
 
-AWS example using Ubuntu Server `20.04`: [docs/AWS.md](docs/AWS.md)
+AWS deployment guide: [docs/AWS.md](docs/AWS.md)
 
 ---
 

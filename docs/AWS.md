@@ -8,18 +8,23 @@ This document describes how to do a deployment of Send in AWS
 
 * ALB:
   - inbound: allow traffic from anywhere on port 80 and 443
-  - ountbound: allow traffic to the instance security group on port `8080`
+  - outbound: allow traffic to the instance security group on port `8080`
 
 * Instance:
   - inbound: allow SSH from your public IP or a bastion (changing the default SSH port is a good idea)
   - inbound: allow traffic from the ALB security group on port `8080`
-  - ountbound: allow all traffic to anywhere
+  - outbound: allow only the egress required by the deployment, such as package
+    repositories during installation, the configured storage and Redis services,
+    DNS/time services, and optional Sentry. Prefer VPC endpoints or narrowly
+    scoped network controls where available.
 
 ### Resources
 
 * An S3 bucket (block all public access)
 
-* A private EC2 instance running Ubuntu `20.04` (you can use the [Amazon EC2 AMI Locator](https://cloud-images.ubuntu.com/locator/ec2/) to find the latest)
+* A private EC2 instance running a currently supported Ubuntu LTS release (use
+  the [Amazon EC2 AMI Locator](https://cloud-images.ubuntu.com/locator/ec2/) to
+  select a maintained image)
 
   Attach an IAM role to the instance with the following inline policy:
 
@@ -29,18 +34,7 @@ This document describes how to do a deployment of Send in AWS
       "Statement": [
           {
               "Action": [
-                  "s3:ListAllMyBuckets"
-              ],
-              "Resource": [
-                  "*"
-              ],
-              "Effect": "Allow"
-          },
-          {
-              "Action": [
-                  "s3:ListBucket",
-                  "s3:GetBucketLocation",
-                  "s3:ListBucketMultipartUploads"
+                  "s3:ListBucket"
               ],
               "Resource": [
                   "arn:aws:s3:::<s3_bucket_name>"
@@ -50,12 +44,9 @@ This document describes how to do a deployment of Send in AWS
           {
               "Action": [
                   "s3:GetObject",
-                  "s3:GetObjectVersion",
-                  "s3:ListMultipartUploadParts",
                   "s3:PutObject",
                   "s3:AbortMultipartUpload",
-                  "s3:DeleteObject",
-                  "s3:DeleteObjectVersion"
+                  "s3:DeleteObject"
               ],
               "Resource": [
                   "arn:aws:s3:::<s3_bucket_name>/*"
@@ -65,6 +56,13 @@ This document describes how to do a deployment of Send in AWS
       ]
   }
   ```
+
+This policy is scoped to the configured bucket and the current S3 adapter's
+operations: bucket health check, object reads and writes, managed multipart
+upload cancellation, and deletion. If the bucket enforces SSE-KMS with a
+customer-managed key, also grant the required `kms:GenerateDataKey` and
+`kms:Decrypt` permissions on that key, update its key policy as needed, and
+test uploads and downloads with the deployment role.
 
 * A public ALB:
 
@@ -149,31 +147,27 @@ Setup a directory for the data
 ```
 sudo mkdir -pv /var/www/send
 sudo chown www-data:www-data /var/www/send
-sudo 750 /var/www/send
+sudo chmod 750 /var/www/send
 ```
 
 ### NodeJS
 
-Update npm:
-
-```bash
-sudo npm install -g npm
-```
-
-Checkout current NodeJS and npm versions:
+Check the installed Node.js and bundled npm versions:
 
 ```bash
 node --version
 npm --version
 ```
 
-Clone repository, install JavaScript packages and compiles the assets:
+Clone the repository, install the locked JavaScript dependencies, and compile
+the production assets:
 
 ```bash
 sudo su -l www-data -s /bin/bash
 cd /var/www/send
 git clone https://gitlab.com/timvisee/send.git .
-npm install
+npm run check:runtime
+npm ci
 npm run build
 exit
 ```
@@ -188,7 +182,15 @@ PORT='8080'
 REDIS_PASSWORD='<redis_password>'
 S3_BUCKET='<s3_bucket_name>'
 AWS_REGION='<aws_region>'
+TRUST_PROXY='<trusted ALB address or narrowly scoped CIDR>'
 ```
+
+Keep the environment file readable only by the service account and root. Set
+`TRUST_PROXY` only after confirming the ALB-to-instance network path and
+restricting direct access to the application port to that ALB. Choose exactly
+one storage backend. The example IAM policy should be reviewed against the
+operations enabled in your deployment and narrowed to the bucket and actions
+actually required.
 
 Lower files and folders permissions to user and group `www-data`:
 
