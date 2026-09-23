@@ -64,7 +64,7 @@ COPY --chown=app:app public/locales public/locales
 COPY --chown=app:app server server
 COPY --chown=app:app --from=builder /app/dist dist
 
-RUN npm ci --production && npm cache clean --force
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 RUN ln -s dist/version.json version.json
 
 ENV PORT=1443

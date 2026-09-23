@@ -21,6 +21,7 @@ describe('Node.js runtime configuration', function () {
 
     assert.match(read('Dockerfile'), /FROM node:24-alpine AS builder/);
     assert.match(read('Dockerfile'), /FROM node:24-alpine\n/);
+    assert.match(read('Dockerfile'), /npm ci --omit=dev --ignore-scripts/);
     const workflow = read('.github/workflows/ci.yml');
     assert.match(workflow, /node-version-file: \.nvmrc/);
     assert.match(workflow, /npm run check:runtime/);
