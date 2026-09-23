@@ -30,6 +30,7 @@ describe('Node.js runtime configuration', function () {
     assert.match(workflow, /npm run build/);
     assert.match(workflow, /packages: write/);
     assert.match(workflow, /ghcr\.io\/njinco\/send/);
+    assert.match(workflow, /tags: \$\{\{ steps\.meta\.outputs\.tags \}\}/);
     assert.doesNotMatch(workflow, /pull_request_target/);
     assert.strictEqual(fs.existsSync(path.join(root, '.gitlab-ci.yml')), false);
     assert.strictEqual(
