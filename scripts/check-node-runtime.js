@@ -41,12 +41,21 @@ if (read('.nvmrc').trim() !== expectedMajor) {
 
 assertIncludes('Dockerfile', 'FROM node:24-alpine AS builder');
 assertIncludes('Dockerfile', 'FROM node:24-alpine\n');
-assertIncludes('.circleci/config.yml', 'cimg/node:24.0-browsers');
-assertIncludes('.circleci/config.yml', 'cimg/node:24.0');
-assertNotIncludes('.circleci/config.yml', 'circleci/node:');
-assertIncludes('.gitlab-ci.yml', 'node:24-bookworm-slim');
-assertIncludes('.circleci/config.yml', 'npm run check:runtime');
-assertIncludes('.gitlab-ci.yml', 'npm run check:runtime');
+assertIncludes('.github/workflows/ci.yml', 'node-version-file: .nvmrc');
+assertIncludes('.github/workflows/ci.yml', 'npm run check:runtime');
+assertIncludes('.github/workflows/ci.yml', 'npm ci');
+assertIncludes('.github/workflows/ci.yml', 'npm run lint');
+assertIncludes('.github/workflows/ci.yml', 'npm test');
+assertIncludes('.github/workflows/ci.yml', 'npm run build');
+assertIncludes('.github/workflows/ci.yml', 'packages: write');
+assertIncludes('.github/workflows/ci.yml', 'ghcr.io/njinco/send');
+assertNotIncludes('.github/workflows/ci.yml', 'pull_request_target');
+if (
+  fs.existsSync(path.join(root, '.gitlab-ci.yml')) ||
+  fs.existsSync(path.join(root, '.circleci/config.yml'))
+) {
+  throw new Error('Obsolete GitLab or CircleCI configuration remains');
+}
 assertIncludes('README.md', 'Node.js 24 LTS');
 assertIncludes('docs/deployment.md', 'Node.js 24 LTS');
 assertIncludes('docs/AWS.md', 'Node.js `24.x` LTS');

@@ -74,7 +74,6 @@ module.exports = function (app) {
         formAction: ["'none'"],
         frameAncestors: ["'none'"],
         objectSrc: ["'none'"],
-        reportUri: '/__cspreport__',
       },
     };
 

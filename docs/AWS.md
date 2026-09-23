@@ -165,7 +165,7 @@ the production assets:
 ```bash
 sudo su -l www-data -s /bin/bash
 cd /var/www/send
-git clone https://gitlab.com/timvisee/send.git .
+git clone https://github.com/njinco/send.git .
 npm run check:runtime
 npm ci
 npm run build
@@ -209,7 +209,7 @@ Create the file `/etc/systemd/system/send.service` with `root` user and `644` mo
 Description=Send
 After=network.target
 Requires=redis-server.service
-Documentation=https://gitlab.com/timvisee/send
+Documentation=https://github.com/njinco/send
 
 [Service]
 Type=simple

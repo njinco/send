@@ -1,7 +1,7 @@
 ##
 # Send
 #
-# License https://gitlab.com/timvisee/send/blob/master/LICENSE
+# License https://github.com/njinco/send/blob/master/LICENSE
 ##
 
 # Build project
@@ -35,6 +35,8 @@ RUN set -x \
 
 # Main image
 FROM node:24-alpine
+
+LABEL org.opencontainers.image.source="https://github.com/njinco/send"
 
 RUN set -x \
   # Change node uid/gid

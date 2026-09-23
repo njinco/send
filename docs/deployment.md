@@ -14,7 +14,7 @@ to use persistent storage; its default is a temporary directory.
   dependencies and build the production assets:
 
 ```bash
-git clone https://github.com/timvisee/send.git /srv/send
+git clone https://github.com/njinco/send.git /srv/send
 cd /srv/send
 npm run check:runtime
 npm ci

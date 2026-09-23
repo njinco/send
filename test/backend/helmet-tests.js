@@ -22,7 +22,6 @@ function startApp() {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", (req) => `'nonce-${req.cspNonce}'`],
-        reportUri: '/__cspreport__',
       },
     }),
   );
@@ -52,7 +51,7 @@ describe('security headers', function () {
     }
   });
 
-  it('supports the application CSP directives and report endpoint', async function () {
+  it('supports CSP directives with request-specific nonces', async function () {
     const server = await startApp();
     try {
       const response = await fetch(
@@ -72,7 +71,6 @@ describe('security headers', function () {
       assert.match(policy, /default-src 'self'/);
       assert.notEqual(nonce.length, 0);
       assert.notEqual(nonce, secondNonce);
-      assert.match(policy, /report-uri \/__cspreport__/);
     } finally {
       server.close();
     }

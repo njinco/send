@@ -33,6 +33,12 @@ checks the production asset bundle. Changes to locale data should also run
 `npm run lint-locales`; use `npm run lint-locales:prod` to check the production
 locale set.
 
+GitHub Actions runs these checks on pushes and pull requests. Successful pushes
+to `master` publish the tested multi-architecture image as
+`ghcr.io/njinco/send:master`. Pushing a `v*` tag publishes that version and
+updates `latest`. New GHCR packages start private, so change the package
+visibility to public before depending on anonymous image pulls.
+
 Keep pull requests focused and describe behavior changes, validation performed,
 and any remaining limitations. Do not include credentials, private keys, or
 production data in commits or test fixtures. Use placeholders in examples and

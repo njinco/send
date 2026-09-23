@@ -16,29 +16,37 @@ was performed.
   runtime-chunk recommendations, plus service-worker package JSON named-export
   warnings. The font asset reduction is recorded in
   [the modernization plan](modernization-plan.md).
-- Production dependency audit reports 4 advisories (1 high, 2 moderate,
-  1 low), in `validator`, nested `uuid` through `gaxios`, and `min-document`.
-  The full audit reports 36 (0 critical, 16 high, 11 moderate, 9 low).
+- The initial production dependency audit reported 4 advisories (1 high,
+  2 moderate, 1 low). After the focused `validator` update, the live production
+  audit reports 3 remaining advisories (2 moderate, 1 low), in nested `uuid`
+  through `gaxios` and `min-document`.
+  The full audit during the clean install reported 35 (0 critical, 15 high,
+  11 moderate, 9 low), including development dependencies.
 - Repository and external production Compose samples both render with
   `docker compose config --quiet` using their sanitized environment samples.
 
 ## Remaining risks and operator decisions
 
-1. **Dependency advisories and deferred families.** The production audit still
-   includes a high `validator` advisory, two moderate `uuid` advisories, and a
-   low `min-document` advisory. Phase 5B also leaves other blocked dependency
-   families for separate review. The broad audit includes development and
-   transitive dependency findings; review the current audit output before each
-   release. No blanket `npm audit fix` was applied.
+1. **Dependency advisories and deferred families.** The lockfile now resolves
+   `validator` to 13.15.35, above the 13.15.22 fix for CVE-2025-12758. A live
+   production audit no longer reports `validator`; it reports two moderate
+   nested `uuid` advisories and one low `min-document` advisory. Phase 5B also
+   leaves other blocked dependency families for separate review. The broad
+   audit includes development and transitive dependency findings; review the
+   current audit output before each release. No blanket `npm audit fix` was
+   applied.
 2. **Expired object retention.** Expiring Redis metadata makes a link
    unavailable but does not remove the corresponding filesystem, S3, or GCS
-   object. Operators need a verified cleanup or lifecycle policy that matches
-   their storage backend and retention requirements.
+   object. The FAQ now explicitly warns operators to configure and verify
+   storage cleanup or lifecycle policies. Automatic application cleanup remains
+   unimplemented: safe implementation needs a backend-specific design for
+   reconciling object keys against expiring Redis metadata without deleting
+   active uploads.
 3. **Security reporting.** The repository publishes no private vulnerability
    reporting contact or channel. Maintainers need to choose and publish one
-   before directing reporters to a specific route. The production CSP sets
-   `report-uri /__cspreport__`, but no server route handles that path, so CSP
-   violation reports are not collected.
+   before directing reporters to a specific route. The production CSP no longer
+   advertises an unimplemented `report-uri`; CSP violation reports are not
+   collected unless maintainers later configure a real reporting service.
 4. **Live deployment validation.** Docker Compose configuration was rendered,
    but access to `/var/run/docker.sock` is denied. Container startup, health,
    restart behavior, and volume persistence were not smoke-tested. The
@@ -49,9 +57,12 @@ was performed.
    email, exactly one storage backend, trusted-proxy ranges, and secret values.
    These values are intentionally absent from committed samples. No live
    production configuration was changed.
-6. **CI ownership.** Both GitLab CI and CircleCI remain in the repository.
-   Consolidation is deferred until maintainers confirm which platform owns
-   testing, release publication, and deployment.
+6. **GitHub CI and image publication.** GitHub Actions replaces the retired
+   GitLab and CircleCI configurations. A hosted CI run and first GHCR image
+   publication have not yet occurred. After publishing, the GHCR package must
+   be made public before the production host can pull the image anonymously;
+   production must then be deliberately switched from the upstream image to a
+   verified `ghcr.io/njinco/send` tag or digest.
 7. **Browser compatibility and bundle warnings.** Edge 18 remains an explicit
    target, while lint reports existing CSS features it does not support. The
    production bundle still exceeds Webpack's 244 KiB asset/entrypoint guidance
@@ -61,9 +72,9 @@ was performed.
 
 ## Follow-up order
 
-Before production release, resolve the deployment-specific choices, validate
-storage cleanup and proxy/TLS behavior on a staging host, and review the
-production audit. Maintainers should also choose a private security-reporting
-channel and decide whether to register a CSP report handler or remove the
-unused report URI. CI consolidation and remaining dependency-family migrations
-can proceed as separate reviewed changes.
+Before production release, validate the GitHub workflow and publish a tagged
+GHCR image, make the package public, then resolve deployment-specific choices
+and validate storage cleanup and proxy/TLS behavior on a staging host. Review
+the production audit and choose a private security-reporting channel as well.
+Remaining dependency-family migrations can proceed as separate reviewed
+changes.

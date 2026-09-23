@@ -445,7 +445,7 @@ performed; deployment remains a separate authorized action.
 
 ### Phase 7C: CI and container workflows
 
-- [ ] Consolidate obsolete or overlapping CI systems.
+- [x] Consolidate obsolete or overlapping CI systems under GitHub Actions.
 - [x] Update build and runtime container bases.
 - [x] Restrict image publication to intentional release events.
 - [x] Replace deprecated package-repository and browser-installation steps.
@@ -468,9 +468,25 @@ the shell integration script passes syntax validation. Docker builds and
 multi-architecture pushes require CI Docker-in-Docker access and were not run
 locally.
 
-Full CI consolidation remains deferred because the repository still exposes
-both CircleCI and GitLab workflows and their ownership/deployment policy must
-be confirmed before removing either system.
+#### Phase 7C GitHub migration record (September 23, 2026)
+
+GitHub Actions now runs the Node.js 24 runtime check, clean dependency install,
+Puppeteer-backed frontend tests, lint, full test suite, and production build on
+branch pushes and pull requests to `master`. A separate job can publish a
+multi-architecture image to `ghcr.io/njinco/send` only after checks pass: pushes
+to `master` publish `master`, and `v*` tags publish the version tag and
+`latest`. The publish job has only `contents: read` and
+`packages: write`; the test job is read-only. Actions are pinned to immutable
+commit SHAs, and the Docker image links its source repository for GHCR.
+
+The obsolete GitLab and CircleCI configuration, including CircleCI's disabled
+integration-test placeholder and stale Docker publication jobs, has been
+removed. Workflow files and Docker metadata were reviewed locally, but GitHub
+Actions cannot be executed by local tests; a successful hosted run and first
+image publication remain pending a push. GHCR creates packages private by
+default, so the package must be switched to public before deployment hosts can
+pull it anonymously. The production `.env` remains unchanged until the fork's
+image is available and verified.
 
 ### Phase 8: final hardening and documentation
 
@@ -515,10 +531,11 @@ The documentation review also found that expired Redis metadata makes an
 upload link unavailable but does not automatically delete the associated local
 or object-store file data; operators need a verified cleanup or lifecycle
 policy. No private security-reporting contact is published for this repository.
-The production CSP includes `report-uri /__cspreport__`, but the server does not
-register a handler for that path, so violation reports are not collected. These
-remain deployment or application follow-ups and are not described as completed
-features.
+The production CSP then included `report-uri /__cspreport__`, but the server did
+not register a handler for that path, so violation reports were not collected.
+The unused directive has since been removed; CSP reports remain unavailable
+unless a real reporting service is configured. These are not described as
+completed features.
 
 The Node 24 runtime guard, lint, backend and frontend suites, and production
 build pass. Both Compose samples render successfully from their sanitized

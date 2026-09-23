@@ -21,12 +21,21 @@ describe('Node.js runtime configuration', function () {
 
     assert.match(read('Dockerfile'), /FROM node:24-alpine AS builder/);
     assert.match(read('Dockerfile'), /FROM node:24-alpine\n/);
-    assert.match(read('.circleci/config.yml'), /cimg\/node:24\.0-browsers/);
-    assert.match(read('.circleci/config.yml'), /cimg\/node:24\.0/);
-    assert.doesNotMatch(read('.circleci/config.yml'), /circleci\/node:/);
-    assert.match(read('.gitlab-ci.yml'), /node:24-bookworm-slim/);
-    assert.match(read('.circleci/config.yml'), /npm run check:runtime/);
-    assert.match(read('.gitlab-ci.yml'), /npm run check:runtime/);
+    const workflow = read('.github/workflows/ci.yml');
+    assert.match(workflow, /node-version-file: \.nvmrc/);
+    assert.match(workflow, /npm run check:runtime/);
+    assert.match(workflow, /npm ci/);
+    assert.match(workflow, /npm run lint/);
+    assert.match(workflow, /npm test/);
+    assert.match(workflow, /npm run build/);
+    assert.match(workflow, /packages: write/);
+    assert.match(workflow, /ghcr\.io\/njinco\/send/);
+    assert.doesNotMatch(workflow, /pull_request_target/);
+    assert.strictEqual(fs.existsSync(path.join(root, '.gitlab-ci.yml')), false);
+    assert.strictEqual(
+      fs.existsSync(path.join(root, '.circleci/config.yml')),
+      false,
+    );
     assert.match(read('README.md'), /Node\.js 24 LTS/);
     assert.match(read('docs/deployment.md'), /Node\.js 24 LTS/);
     assert.match(read('docs/AWS.md'), /Node\.js `24\.x` LTS/);

@@ -1,17 +1,17 @@
-# [![Send](./assets/icon-64x64.png)](https://gitlab.com/timvisee/send/) Send
+# [![Send](./assets/icon-64x64.png)](https://github.com/njinco/send) Send
 
-[![Build status on GitLab CI][gitlab-ci-master-badge]][gitlab-ci-link]
+[![Build status on GitHub Actions][github-actions-badge]][github-actions-link]
 [![Latest release][release-badge]][release-link]
 [![Docker image][docker-image-badge]][docker-image-link]
 [![Project license][repo-license-badge]](LICENSE)
 
-[docker-image-badge]: https://img.shields.io/badge/docker-latest-blue.svg
-[docker-image-link]: https://gitlab.com/timvisee/send/container_registry/eyJuYW1lIjoidGltdmlzZWUvc2VuZCIsInRhZ3NfcGF0aCI6Ii90aW12aXNlZS9zZW5kL3JlZ2lzdHJ5L3JlcG9zaXRvcnkvMTQxODUwNC90YWdzP2Zvcm1hdD1qc29uIiwiaWQiOjE0MTg1MDQsImNsZWFudXBfcG9saWN5X3N0YXJ0ZWRfYXQiOm51bGx9
-[gitlab-ci-link]: https://gitlab.com/timvisee/send/pipelines
-[gitlab-ci-master-badge]: https://gitlab.com/timvisee/send/badges/master/pipeline.svg
-[release-badge]: https://img.shields.io/github/v/tag/timvisee/send
-[release-link]: https://gitlab.com/timvisee/send/-/tags
-[repo-license-badge]: https://img.shields.io/github/license/timvisee/send.svg
+[docker-image-badge]: https://img.shields.io/badge/GHCR-ghcr.io%2Fnjinco%2Fsend-blue?logo=docker
+[docker-image-link]: https://github.com/njinco/send/pkgs/container/send
+[github-actions-link]: https://github.com/njinco/send/actions/workflows/ci.yml
+[github-actions-badge]: https://github.com/njinco/send/actions/workflows/ci.yml/badge.svg
+[release-badge]: https://img.shields.io/github/v/tag/njinco/send
+[release-link]: https://github.com/njinco/send/tags
+[repo-license-badge]: https://img.shields.io/github/license/njinco/send.svg
 
 A fork of Mozilla's [Firefox Send][mozilla-send].
 Mozilla discontinued Send, this fork is a community effort to keep the project

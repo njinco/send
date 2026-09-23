@@ -23,14 +23,14 @@ Send uses JavaScript to:
 
 - Encrypt and decrypt files locally on the client instead of the server.
 - Render the user interface.
-- Manage translations on the website into [various different languages](https://github.com/timvisee/send#localization).
+- Manage translations on the website into [various different languages](https://github.com/njinco/send#localization).
 
 The host may optionally configure Sentry error reporting. It is disabled unless
 the host supplies Sentry configuration, and the browser does not initialize it
 when the browser's Do Not Track setting is enabled. Check the operator's privacy
 policy for how a particular instance handles diagnostics.
 
-Since Send is an open source project, you can see all of the cool ways we use JavaScript by [examining our code](https://github.com/timvisee/send/).
+Since Send is an open source project, you can see all of the cool ways we use JavaScript by [examining our code](https://github.com/njinco/send/).
 
 ## How long are files available for?
 

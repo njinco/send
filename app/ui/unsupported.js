@@ -1,7 +1,7 @@
 const html = require('choo/html');
 const modal = require('./modal');
 
-module.exports = function(state, emit) {
+module.exports = function (state, emit) {
   let strings = {};
   let why = '';
   let url = '';
@@ -11,7 +11,7 @@ module.exports = function(state, emit) {
     why = html`
       <a
         class="text-primary"
-        href="https://github.com/timvisee/send/blob/master/docs/faq.md#why-is-my-browser-not-supported"
+        href="https://github.com/njinco/send/blob/master/docs/faq.md#why-is-my-browser-not-supported"
       >
         ${state.translate('notSupportedLink')}
       </a>
@@ -44,7 +44,7 @@ function outdatedStrings(state) {
   return {
     header: state.translate('notSupportedHeader'),
     description: state.translate('notSupportedOutdatedDetail'),
-    button: state.translate('updateFirefox')
+    button: state.translate('updateFirefox'),
   };
 }
 
@@ -52,6 +52,6 @@ function unsupportedStrings(state) {
   return {
     header: state.translate('notSupportedHeader'),
     description: state.translate('notSupportedDescription'),
-    button: state.translate('downloadFirefox')
+    button: state.translate('downloadFirefox'),
   };
 }

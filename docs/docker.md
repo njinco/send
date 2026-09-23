@@ -1,9 +1,9 @@
 ## Docker Quickstart
 
-Use `registry.gitlab.com/timvisee/send:latest` from [`timvisee/send`'s Gitlab image registry](https://gitlab.com/timvisee/send/container_registry) for the latest Docker image.
+Successful pushes to `master` publish `ghcr.io/njinco/send:master`. A pushed `v*` tag publishes that version tag and updates `:latest`. For production, use a specific version tag or digest rather than mutable tags. The first published GHCR package must be made public before anonymous pulls will work.
 
 ```bash
-docker pull registry.gitlab.com/timvisee/send:latest
+docker pull ghcr.io/njinco/send:latest
 
 # Example quickstart for Docker Engine 20.10+ with Redis running on the host.
 docker run -v $PWD/uploads:/uploads -p 1443:1443 \
@@ -11,7 +11,7 @@ docker run -v $PWD/uploads:/uploads -p 1443:1443 \
     --add-host=host.docker.internal:host-gateway \
     -e 'REDIS_HOST=host.docker.internal' \
     -e 'FILE_DIR=/uploads' \
-    registry.gitlab.com/timvisee/send:latest
+    ghcr.io/njinco/send:latest
 ```
 
 The host's Redis must accept connections on the Docker bridge gateway address;
@@ -26,7 +26,7 @@ repository's sample.
 
 ## Environment Variables
 
-All the available config options and their defaults can be found here: https://github.com/timvisee/send/blob/master/server/config.js
+All the available config options and their defaults can be found here: https://github.com/njinco/send/blob/master/server/config.js
 
 Config options should be set as unquoted environment variables. Boolean options should be `true`/`false`, time/duration should be integers (seconds), and filesize values should be integers (bytes).
 
@@ -43,7 +43,7 @@ Config options expecting array values (e.g. `EXPIRE_TIMES_SECONDS`, `DOWNLOAD_CO
 | `SEND_FOOTER_DMCA_URL` | A URL to a contact page for DMCA requests (empty / not shown by default)
 | `SENTRY_CLIENT`, `SENTRY_DSN`  | Sentry Client ID and DSN for error tracking (optional, disabled by default)
 
-*Note: more options can be found here: https://github.com/timvisee/send/blob/master/server/config.js*
+*Note: more options can be found here: https://github.com/njinco/send/blob/master/server/config.js*
 
 #### Upload and Download Limits
 
@@ -60,7 +60,7 @@ Configure the limits for uploads and downloads. Long expiration times are risky 
 | `DEFAULT_DOWNLOADS` | Default download limit in UI (defaults to `1`)
 | `DEFAULT_EXPIRE_SECONDS` | Default expire time in UI (defaults to `86400`)
 
-*Note: more options can be found here: https://github.com/timvisee/send/blob/master/server/config.js*
+*Note: more options can be found here: https://github.com/njinco/send/blob/master/server/config.js*
 
 #### Storage Backend Options
 
@@ -84,7 +84,7 @@ Redis is used as the metadata database for the backend and is required no matter
 | `AWS_SECRET_ACCESS_KEY` | S3 secret access key ID (only set if using S3 for storage)
 | `GCS_BUCKET` | Google Cloud Storage bucket (only set if using GCP for storage)
 
-*Note: more options can be found here: https://github.com/timvisee/send/blob/master/server/config.js*
+*Note: more options can be found here: https://github.com/njinco/send/blob/master/server/config.js*
 
 ## Branding
 
@@ -123,7 +123,7 @@ $ docker run -p 1443:1443 \
   -e 'SENTRY_CLIENT=<your-sentry-client-id>' \
   -e 'SENTRY_DSN=<your-sentry-dsn>' \
   -e 'BASE_URL=https://send.example.com' \
-  registry.gitlab.com/timvisee/send:latest
+  ghcr.io/njinco/send:latest
 ```
 
 Replace every placeholder with values for your deployment. Keep the bucket
@@ -146,7 +146,7 @@ $ docker run --net=timviseesend -v $PWD/uploads:/uploads -p 1443:1443 \
     -e 'MAX_FILE_SIZE=5368709120' \
     -e 'MAX_EXPIRE_SECONDS=2592000' \
     -e 'SEND_FOOTER_DMCA_URL=https://example.com/dmca-contact-info' \
-    registry.gitlab.com/timvisee/send:latest
+    ghcr.io/njinco/send:latest
 ```
 Then open http://localhost:1443 to view the UI. (change the `localhost` to your IP or hostname above to serve the UI to others)
 
@@ -161,7 +161,7 @@ $ docker run -p 1443:1443 \
     -e 'UI_COLOR_PRIMARY=#f00' \
     -e 'UI_COLOR_ACCENT=#a00' \
     -e 'UI_CUSTOM_ASSETS_ICON=custom_assets/logo.svg' \
-    registry.gitlab.com/timvisee/send:latest
+    ghcr.io/njinco/send:latest
 ```
 
 ## Docker Compose
