@@ -20,15 +20,15 @@ const params = {
   rs: rs,
   salt: Buffer.from(b64ToArray(testSalt)),
   keyid: '',
-  key: Buffer.from(b64ToArray(keystr))
+  key: Buffer.from(b64ToArray(keystr)),
 };
 
 const encrypted = ece.encrypt(buffer, params);
 const decrypted = ece.decrypt(encrypted, params);
 
-describe('Streaming', function() {
-  describe('blobStream', function() {
-    it('reads the entire blob', async function() {
+describe('Streaming', function () {
+  describe('blobStream', function () {
+    it('reads the entire blob', async function () {
       const len = 12345;
       const chunkSize = 1024;
       const blob = new Blob([new Uint8Array(len)]);
@@ -45,12 +45,12 @@ describe('Streaming', function() {
     });
   });
 
-  describe('concatStream', function() {
-    it('reads all the streams', async function() {
+  describe('concatStream', function () {
+    it('reads all the streams', async function () {
       const count = 5;
       const len = 12345;
       const streams = Array.from({ length: count }, () =>
-        blobStream(new Blob([new Uint8Array(len)]))
+        blobStream(new Blob([new Uint8Array(len)])),
       );
       const concat = concatStream(streams);
       const reader = concat.getReader();
@@ -65,11 +65,11 @@ describe('Streaming', function() {
   });
 
   //testing against http_ece's implementation
-  describe('ECE', function() {
+  describe('ECE', function () {
     const key = b64ToArray(keystr);
     const salt = b64ToArray(testSalt).buffer;
 
-    it('can encrypt', async function() {
+    it('can encrypt', async function () {
       const stream = new Archive([new Blob([str], { type: 'text/plain' })])
         .stream;
       const encStream = encryptStream(stream, key, rs, salt);
@@ -86,7 +86,7 @@ describe('Streaming', function() {
       assert.deepEqual(result, encrypted);
     });
 
-    it('can decrypt', async function() {
+    it('can decrypt', async function () {
       const stream = new Archive([new Blob([encrypted])]).stream;
       const decStream = decryptStream(stream, key, rs);
 
@@ -101,10 +101,36 @@ describe('Streaming', function() {
 
       assert.deepEqual(result, decrypted);
     });
+
+    it('decrypts chunks that are views into larger backing buffers', async function () {
+      let offset = 0;
+      const stream = new ReadableStream({
+        pull(controller) {
+          if (offset >= encrypted.length) {
+            controller.close();
+            return;
+          }
+          const size = Math.min(7, encrypted.length - offset);
+          const backing = new Uint8Array(size + 4);
+          backing.set(encrypted.subarray(offset, offset + size), 2);
+          controller.enqueue(backing.subarray(2, 2 + size));
+          offset += size;
+        },
+      });
+      const reader = decryptStream(stream, key, rs).getReader();
+      let result = Buffer.from([]);
+      let state = await reader.read();
+      while (!state.done) {
+        result = Buffer.concat([result, state.value]);
+        state = await reader.read();
+      }
+
+      assert.deepEqual(result, decrypted);
+    });
   });
 
-  describe('encryptedSize', function() {
-    it('matches the size of an encrypted buffer', function() {
+  describe('encryptedSize', function () {
+    it('matches the size of an encrypted buffer', function () {
       assert.equal(encryptedSize(buffer.length, rs), encrypted.length);
     });
   });

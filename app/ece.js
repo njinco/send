@@ -33,7 +33,7 @@ class ECETransformer {
       this.ikm,
       'HKDF',
       false,
-      ['deriveKey']
+      ['deriveKey'],
     );
 
     return crypto.subtle.deriveKey(
@@ -41,15 +41,15 @@ class ECETransformer {
         name: 'HKDF',
         salt: this.salt,
         info: encoder.encode('Content-Encoding: aes128gcm\0'),
-        hash: 'SHA-256'
+        hash: 'SHA-256',
       },
       inputKey,
       {
         name: 'AES-GCM',
-        length: 128
+        length: 128,
       },
       true, // Edge polyfill requires key to be extractable to encrypt :/
-      ['encrypt', 'decrypt']
+      ['encrypt', 'decrypt'],
     );
   }
 
@@ -59,7 +59,7 @@ class ECETransformer {
       this.ikm,
       'HKDF',
       false,
-      ['deriveKey']
+      ['deriveKey'],
     );
 
     const base = await crypto.subtle.exportKey(
@@ -69,16 +69,16 @@ class ECETransformer {
           name: 'HKDF',
           salt: this.salt,
           info: encoder.encode('Content-Encoding: nonce\0'),
-          hash: 'SHA-256'
+          hash: 'SHA-256',
         },
         inputKey,
         {
           name: 'AES-GCM',
-          length: 128
+          length: 128,
         },
         true,
-        ['encrypt', 'decrypt']
-      )
+        ['encrypt', 'decrypt'],
+      ),
     );
 
     return Buffer.from(base.slice(0, NONCE_LENGTH));
@@ -144,7 +144,10 @@ class ECETransformer {
       throw new Error('chunk too small for reading header');
     }
     const header = {};
-    header.salt = buffer.buffer.slice(0, KEY_LENGTH);
+    header.salt = buffer.buffer.slice(
+      buffer.byteOffset,
+      buffer.byteOffset + KEY_LENGTH,
+    );
     header.rs = buffer.readUIntBE(KEY_LENGTH, 4);
     const idlen = buffer.readUInt8(KEY_LENGTH + 4);
     header.length = idlen + KEY_LENGTH + 5;
@@ -156,7 +159,7 @@ class ECETransformer {
     const encrypted = await crypto.subtle.encrypt(
       { name: 'AES-GCM', iv: nonce },
       this.key,
-      this.pad(buffer, isLast)
+      this.pad(buffer, isLast),
     );
     return Buffer.from(encrypted);
   }
@@ -167,10 +170,10 @@ class ECETransformer {
       {
         name: 'AES-GCM',
         iv: nonce,
-        tagLength: 128
+        tagLength: 128,
       },
       this.key,
-      buffer
+      buffer,
     );
 
     return this.unpad(Buffer.from(data), isLast);
@@ -189,7 +192,7 @@ class ECETransformer {
   async transformPrevChunk(isLast, controller) {
     if (this.mode === MODE_ENCRYPT) {
       controller.enqueue(
-        await this.encryptRecord(this.prevChunk, this.seq, isLast)
+        await this.encryptRecord(this.prevChunk, this.seq, isLast),
       );
       this.seq++;
     } else {
@@ -202,7 +205,7 @@ class ECETransformer {
         this.nonceBase = await this.generateNonceBase();
       } else {
         controller.enqueue(
-          await this.decryptRecord(this.prevChunk, this.seq - 1, isLast)
+          await this.decryptRecord(this.prevChunk, this.seq - 1, isLast),
         );
       }
       this.seq++;
@@ -214,7 +217,14 @@ class ECETransformer {
       await this.transformPrevChunk(false, controller);
     }
     this.firstchunk = false;
-    this.prevChunk = Buffer.from(chunk.buffer);
+    // ReadableStream chunks may be views into a larger backing buffer.
+    // Preserve only the bytes in the view or decryption can consume unrelated
+    // bytes before/after this chunk and fail authentication.
+    this.prevChunk = Buffer.from(
+      chunk.buffer,
+      chunk.byteOffset,
+      chunk.byteLength,
+    );
   }
 
   async flush(controller) {
@@ -291,7 +301,7 @@ export function encryptStream(
   input,
   key,
   rs = ECE_RECORD_SIZE,
-  salt = generateSalt(KEY_LENGTH)
+  salt = generateSalt(KEY_LENGTH),
 ) {
   const mode = 'encrypt';
   const inputStream = transformStream(input, new StreamSlicer(rs, mode));
