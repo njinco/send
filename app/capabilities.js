@@ -6,42 +6,42 @@ async function checkCrypto() {
     const key = await crypto.subtle.generateKey(
       {
         name: 'AES-GCM',
-        length: 128
+        length: 128,
       },
       true,
-      ['encrypt', 'decrypt']
+      ['encrypt', 'decrypt'],
     );
     await crypto.subtle.exportKey('raw', key);
     await crypto.subtle.encrypt(
       {
         name: 'AES-GCM',
         iv: crypto.getRandomValues(new Uint8Array(12)),
-        tagLength: 128
+        tagLength: 128,
       },
       key,
-      new ArrayBuffer(8)
+      new ArrayBuffer(8),
     );
     await crypto.subtle.importKey(
       'raw',
       crypto.getRandomValues(new Uint8Array(16)),
       'PBKDF2',
       false,
-      ['deriveKey']
+      ['deriveKey'],
     );
     await crypto.subtle.importKey(
       'raw',
       crypto.getRandomValues(new Uint8Array(16)),
       'HKDF',
       false,
-      ['deriveKey']
+      ['deriveKey'],
     );
     await crypto.subtle.generateKey(
       {
         name: 'ECDH',
-        namedCurve: 'P-256'
+        namedCurve: 'P-256',
       },
       true,
-      ['deriveBits']
+      ['deriveBits'],
     );
     return true;
   } catch (err) {
@@ -58,7 +58,7 @@ async function checkCrypto() {
 function checkStreams() {
   try {
     new ReadableStream({
-      pull() {}
+      pull() {},
     });
     return true;
   } catch (e) {
@@ -100,17 +100,20 @@ export default async function getCapabilities() {
     window.matchMedia('(display-mode: standalone)').matches ||
     navigator.standalone;
 
-  const mobileFirefox = browser === 'firefox' && isMobile;
-
   return {
     account,
     crypto,
     serviceWorker,
     streamUpload: nativeStreams || polyStreams,
+    // Firefox's service-worker download stream fails in production on the
+    // standard Firefox client. Use the blob-based download path there instead.
     streamDownload:
-      nativeStreams && serviceWorker && browser !== 'safari' && !mobileFirefox,
+      nativeStreams &&
+      serviceWorker &&
+      browser !== 'safari' &&
+      browser !== 'firefox',
     multifile: nativeStreams || polyStreams,
     share,
-    standalone
+    standalone,
   };
 }
