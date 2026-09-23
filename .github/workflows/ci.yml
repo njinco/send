@@ -39,8 +39,11 @@ jobs:
         run: npx puppeteer browsers install chrome
       - name: Install Chrome Linux dependencies
         run: |
-          chrome_path="$(node -p "require('puppeteer').executablePath()")"
-          dependencies="$(paste -sd, "$(dirname "$chrome_path")/deb.deps")"
+          dependencies_file="$(
+            node -e "require('puppeteer').executablePath().then(p => console.log(require('node:path').join(require('node:path').dirname(p), 'deb.deps')))"
+          )"
+          test -f "$dependencies_file"
+          dependencies="$(paste -sd, "$dependencies_file")"
           sudo apt-get update
           sudo apt-get satisfy -y "$dependencies" --no-install-recommends
       - name: Lint
