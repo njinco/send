@@ -105,13 +105,14 @@ export default async function getCapabilities() {
     crypto,
     serviceWorker,
     streamUpload: nativeStreams || polyStreams,
-    // Firefox's service-worker download stream fails in production on the
-    // standard Firefox client. Use the blob-based download path there instead.
+    // Firefox and mobile Chrome can fail to save service-worker download
+    // streams. Use the authenticated blob download path for those browsers.
     streamDownload:
       nativeStreams &&
       serviceWorker &&
       browser !== 'safari' &&
-      browser !== 'firefox',
+      browser !== 'firefox' &&
+      !(isMobile && browser === 'chrome'),
     multifile: nativeStreams || polyStreams,
     share,
     standalone,
